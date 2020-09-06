@@ -1,15 +1,15 @@
 package main
 
 func main() {
-	var a *AppController
-	var m *Metadata
+	s := make(map[uint][3000]*[]uint8)
+	t := [3000]*[]uint8{}
+	s[0] = [3000]*[]uint8{}
 
-	m = &Metadata{
-		Method: "insert",
-		Data: &[]byte{},
-	}
+	m := []uint8("sdklfjaslkdjfs")
+	a := &m
 
-	a = &AppController{}
+	t[0] = a
 
-	a.Run(m)
+	s[0] = t
+
 }

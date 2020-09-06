@@ -5,47 +5,39 @@ import (
 )
 
 func TestIdGenerationWithinRange(t *testing.T) {
-	var fac *IdMapFactory
-	var curr int = 0
+	var fac *IdFactory
+	var iterations int = 0
+	var currId uint = 0
 
-	fac = &IdMapFactory{}
+	fac = &IdFactory{}
 
 	fac.Init()
 
 	for {
-		if curr == 10000000 {
+		if iterations == 10000000 {
 			break
 		}
 
 		id := fac.Next()
 
-		if id != curr {
-			t.Errorf("TestIdGeneration: mismatched ids, expected %d, got %d", curr, id)
+		if id < 0 || id > 2999 {
+			t.Errorf("Invalid id produced by the IdFactory. Expected a value between 0 and 3000, got %d", id);
 
 			return
 		}
 
-		curr++
-	}
-}
+		if currId != id {
+			t.Errorf("Counted ins are not equal. Got %d, expected %d", id, currId);
 
-func BenchmarkIdFactory(b *testing.B) {
-	var fac *IdMapFactory
-	var curr int = 0
+			return
+		}
 
-	fac = &IdMapFactory{}
+		currId++
 
-	fac.Init()
+		iterations++
 
-	for n := 0; n < b.N; n++ {
-		for {
-			if curr == 100000000 {
-				break
-			}
-
-			fac.Next()
-
-			curr++
+		if currId > 2999 {
+			currId = 0
 		}
 	}
 }

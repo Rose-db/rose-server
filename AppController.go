@@ -1,29 +1,66 @@
 package main
 
-type AppController struct {}
+type AppController struct {
+	Database *Database
+}
 
-func (a *AppController) Run(m *Metadata) IError {
-	err := m.Validate()
+type AppResult struct {
+	Id uint
+	Method string
+	Status string
+	Reason string
+}
 
-	if err != nil {
-		return err
+func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
+	var vErr IError
+	var idx uint
+
+	vErr = m.Validate()
+
+	if vErr != nil {
+		return vErr, nil
 	}
-
-	fsErr := CreateDbIfNotExists()
-
-	if fsErr != nil {
-		return err
-	}
-
-	db := &Database{InternalDb: nil}
-
-	db.Init()
 
 	if m.Method == InsertMethodType {
-		db.Insert("sfdjasdlfjk", m.Data)
+		idx = a.Database.Insert(m.Id, m.Data)
+
+		return nil, &AppResult{
+			Id:     idx,
+			Method: m.Method,
+			Status: "ok",
+			Reason: "",
+		}
+	} else if m.Method == DeleteMethodType {
+		return nil, &AppResult{
+			Id:     1,
+			Method: m.Method,
+			Status: "ok",
+			Reason: "",
+		}
+	} else if m.Method == ReadMethodType {
+		return nil, &AppResult{
+			Id:     1,
+			Method: m.Method,
+			Status: "ok",
+			Reason: "",
+		}
 	}
 
-	// LoadDatabase()
+	panic("Internal rose error. Unreachable code reached. None of the methods have executed but one should have.")
+}
+
+func (a *AppController) Init() IError {
+	var fsErr IError
+
+	fsErr = CreateDbIfNotExists()
+
+	if fsErr != nil {
+		return fsErr
+	}
+
+	a.Database = &Database{}
+
+	a.Database.Init()
 
 	return nil
 }
