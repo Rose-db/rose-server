@@ -7,6 +7,7 @@ const HttpErrorType = "http_error"
 
 const HttpErrorCode = 1
 const SystemErrorCode = 2
+const InvalidRequestCode = 3
 
 const InsertMethodType = "insert"
 const DeleteMethodType = "delete"

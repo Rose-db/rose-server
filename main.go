@@ -5,14 +5,16 @@ import (
 )
 
 func main() {
+	var app *AppController
 	// Error message is handled in Boot()
-	if ok := Boot(); !ok {
+	if app = Boot(); app == nil {
 		return
 	}
 
 	server := &Server{
 		Host: "127.0.0.1",
 		Port: "8090",
+		App: app,
 	}
 
 	fmt.Println("Rose server started. Listening to incoming requests")
@@ -20,7 +22,7 @@ func main() {
 	server.Start()
 }
 
-func Boot() bool {
+func Boot() *AppController {
 	var app *AppController
 	var err error
 	var errStream chan IError
@@ -35,8 +37,8 @@ func Boot() bool {
 	if err != nil {
 		fmt.Printf("An error occurred when starting Rose: %s\nExiting", err.Error())
 
-		return false
+		return nil
 	}
 
-	return true
+	return app
 }
