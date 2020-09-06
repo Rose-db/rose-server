@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -33,7 +32,6 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 
 	idx = d.IdFactory.Next()
 
-
 	d.IdLookupMap[id] = idx
 
 	m = d.InternalDb[d.CurrMapIdx]
@@ -54,20 +52,28 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 	return computedIdx
 }
 
-func (d *Database) Delete(id int) {
+func (d *Database) Delete(id string) {
 
 }
 
-func (d *Database) Read(id int) {
-	b := []byte{}
-	s := "test"
-	var sb strings.Builder
-	sb.Grow(len(s))
+func (d *Database) Read(id string) string {
+	var Id uint
+	var m *[3000]*[]uint8
+	var mapId uint = 0
+	var b *[]uint8
 
-	for _, p := range b {
+	Id = d.IdLookupMap[id]
+	mapId = Id / 3000
+	m = d.InternalDb[mapId]
+
+	b = m[Id]
+
+	var sb strings.Builder
+	sb.Grow(len(*b))
+
+	for _, p := range *b {
 		sb.WriteByte(p)
 	}
 
-	s = sb.String()   // no copying
-	fmt.Println(s)
+	return sb.String()
 }

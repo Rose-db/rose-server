@@ -1,15 +1,42 @@
 package main
 
+import (
+	"fmt"
+)
+
 func main() {
-	s := make(map[uint][3000]*[]uint8)
-	t := [3000]*[]uint8{}
-	s[0] = [3000]*[]uint8{}
+	// Error message is handled in Boot()
+	if ok := Boot(); !ok {
+		return
+	}
 
-	m := []uint8("sdklfjaslkdjfs")
-	a := &m
+	server := &Server{
+		Host: "127.0.0.1",
+		Port: "8090",
+	}
 
-	t[0] = a
+	fmt.Println("Rose server started. Listening to incoming requests")
 
-	s[0] = t
+	server.Start()
+}
 
+func Boot() bool {
+	var app *AppController
+	var err error
+	var errStream chan IError
+
+	fmt.Println("Booting Rose cache server...")
+
+	app = &AppController{}
+	errStream = app.Init(true)
+
+	err = <- errStream
+
+	if err != nil {
+		fmt.Printf("An error occurred when starting Rose: %s\nExiting", err.Error())
+
+		return false
+	}
+
+	return true
 }

@@ -6,23 +6,36 @@ import (
 	"runtime"
 )
 
-func CreateDbIfNotExists() IError {
+func CreateDbIfNotExists(msgCom chan string, errCom chan IError) {
 	var roseDb string
+	var fsErr IError
 
 	roseDb = fmt.Sprintf("%s/.rose_db", UserHomeDir())
 
+	msgCom<- "Creating the database on the filesystem if not exists..."
 	if _, err := os.Stat(roseDb); os.IsNotExist(err) {
+		msgCom<- "Database not found. Creating it now from scratch..."
 		err = os.Mkdir(roseDb, os.ModePerm)
 
 		if err != nil {
-			return &SystemError{
+			close(msgCom)
+			fsErr = &SystemError{
 				Code:    SystemErrorCode,
 				Message: err.Error(),
 			}
+
+			errCom<- fsErr
+
+			close(errCom)
+
+			return
 		}
 	}
 
-	return nil
+	msgCom<- "Filesystem database created successfully"
+
+	close(msgCom)
+	close(errCom)
 }
 
 func UserHomeDir() string {

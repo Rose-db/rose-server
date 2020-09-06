@@ -3,118 +3,61 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 )
 
-
-func TestSingleInsert(t *testing.T) {
-	var s []byte
+func testCreateController(testName string) *AppController {
 	var a *AppController
-	var m *Metadata
-
 	var appErr IError
-	var runErr IError
-	var appResult *AppResult
+	var errStream chan IError
 
-	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
+	a = &AppController{}
+	errStream = a.Init(false)
+
+	appErr = <- errStream
+
+	if appErr != nil {
+		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
+	}
+
+	return a
+}
+
+func testGetBenchmarkName(t *testing.B) string {
+	v := reflect.ValueOf(*t)
+	return v.FieldByName("name").String()
+}
+
+func testGetTestName(t *testing.T) string {
+	v := reflect.ValueOf(*t)
+	return v.FieldByName("name").String()
+}
+
+func fixtureSingleInsert(id string, value string, a *AppController, t *testing.T, testName string) {
+	var s []byte
+	var m *Metadata
+	var appErr IError
+	s = []byte(value)
 
 	m = &Metadata{
 		Method: InsertMethodType,
 		Data: &s,
-		Id: "id",
+		Id: id,
 	}
 
-	a = &AppController{}
-	appErr = a.Init()
+	appErr, _ = a.Run(m)
 
 	if appErr != nil {
-		t.Errorf("TestSingleInsert: AppController failed to Init with message: %s", appErr.Error())
-
-		return
-	}
-
-	runErr, appResult = a.Run(m)
-
-	if runErr != nil {
-		t.Errorf("TestSingleInsert: AppController::Run returned an error: %s", runErr.Error())
-
-		return
-	}
-
-	if appResult.Status != "ok" {
-		t.Errorf("TestSingleInsert: AppController::Run returned a non ok status but it should return ok")
-
-		return
-	}
-
-	if appResult.Id != 0 {
-		t.Errorf("TestSingleInsert: AppController::Run invalid Id returned on inisert. Got %d, expected %d", appResult.Id, 0)
-
-		return
-	}
-}
-
-func TestMultipleInsert(t *testing.T) {
-	var s []byte
-	var a *AppController
-	var m *Metadata
-
-
-	var appErr IError
-	var appResult *AppResult
-	var currId uint
-
-	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
-
-	a = &AppController{}
-
-	appErr = a.Init()
-
-	if appErr != nil {
-		t.Errorf("TestMultipleInsert: AppController failed to Init with message: %s", appErr.Error())
-
-		return
-	}
-
-	for i := 0; i < 100000; i++ {
-		m = &Metadata{
-			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", i),
-		}
-
-		appErr, appResult = a.Run(m)
-
-		if appErr != nil {
-			t.Errorf("TestMultipleInsert: AppController::Run() returned an error: %s", appErr.Error())
-
-			return
-		}
-
-		if appResult.Id != currId {
-			t.Errorf("TestMultipleInsert: AppController::Run() there has been a discrepancy between generated id and counted id. Got %d, expected %d", appResult.Id, currId)
-
-			return
-		}
-
-		currId++
+		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
 	}
 }
 
 func TestDatabaseDirCreated(t *testing.T) {
 	var m *Metadata
 	var a *AppController
-	var appErr IError
 
-	a = &AppController{}
-
-	appErr = a.Init()
-
-	if appErr != nil {
-		t.Errorf("TestDatabaseDirCreated: AppController failed to Init with message: %s", appErr.Error())
-
-		return
-	}
+	a = testCreateController(testGetTestName(t))
 
 	m = &Metadata{
 		Method: "insert",
@@ -125,7 +68,7 @@ func TestDatabaseDirCreated(t *testing.T) {
 	err, _ := a.Run(m)
 
 	if err != nil {
-		t.Errorf("TestDatabaseDirCreated: ApplicationController::Run() returned an error: %s", err.Error())
+		t.Errorf("%s: ApplicationController::Run() returned an error: %s", testGetTestName(t), err.Error())
 
 		return
 	}
@@ -134,14 +77,14 @@ func TestDatabaseDirCreated(t *testing.T) {
 	roseDb := fmt.Sprintf("%s/.rose_db", h)
 
 	if _, err := os.Stat(roseDb); os.IsNotExist(err) {
-		t.Errorf("TestDatabaseDirCreated: Database directory .rose_db was not created in %s", h)
+		t.Errorf("%s: Database directory .rose_db was not created in %s", h, testGetTestName(t))
 
 		return
 	}
 
 	rmErr := os.RemoveAll(roseDb)
 	if rmErr != nil {
-		t.Errorf("TestDatabaseDirCreated: Database directory failed to remove")
+		t.Errorf("%s: Database directory failed to remove", testGetTestName(t))
 	}
 }
 
@@ -150,17 +93,7 @@ func TestInvalidMethod(t *testing.T) {
 	var m *Metadata
 	var a *AppController
 
-	var appErr IError
-
-	a = &AppController{}
-	appErr = a.Init()
-
-	if appErr != nil {
-		t.Errorf("TestInvalidMethod: failed to Init with message: %s", appErr.Error())
-
-		return
-	}
-
+	a = testCreateController(testGetTestName(t))
 
 	iv = []string{"invalid1", "invalid2"}
 
@@ -174,17 +107,17 @@ func TestInvalidMethod(t *testing.T) {
 		err, _ := a.Run(m)
 
 		if err == nil {
-			t.Errorf("TestInvalidMethod: ApplicationController::Run() should have returned an IError, nil returned")
+			t.Errorf("%s: ApplicationController::Run() should have returned an IError, nil returned", testGetTestName(t))
 
 			return
 		}
 
 		if err.Type() != HttpErrorType {
-			t.Errorf("TestInvalidMethod: Invalid error type given. Expected %s, got %s", HttpErrorType, err.Type())
+			t.Errorf("%s: Invalid error type given. Expected %s, got %s", testGetTestName(t), HttpErrorType, err.Type())
 		}
 
 		if err.GetCode() != HttpErrorCode {
-			t.Errorf("TestInvalidMethod: Invalid error code given. Expected %d, got %d", HttpErrorCode, err.GetCode())
+			t.Errorf("%s: Invalid error code given. Expected %d, got %d", testGetTestName(t), HttpErrorCode, err.GetCode())
 		}
 	}
 }
@@ -194,17 +127,7 @@ func TestInvalidId(t *testing.T) {
 	var m *Metadata
 	var a *AppController
 
-	var appErr IError
-
-	a = &AppController{}
-
-	appErr = a.Init()
-
-	if appErr != nil {
-		t.Errorf("TestInvalidId: AppController failed to Init with message: %s", appErr.Error())
-
-		return
-	}
+	a = testCreateController(testGetTestName(t))
 
 	iv = []string{"insert", "read", "delete"}
 
@@ -218,7 +141,7 @@ func TestInvalidId(t *testing.T) {
 		err, _ := a.Run(m)
 
 		if err.GetCode() != HttpErrorCode {
-			t.Errorf("TestInvalidId: Invalid error code given. Expected %d, got %d", HttpErrorCode, err.GetCode())
+			t.Errorf("%s: Invalid error code given. Expected %d, got %d", testGetTestName(t), HttpErrorCode, err.GetCode())
 		}
 	}
 }
@@ -228,17 +151,7 @@ func TestValidMethod(t *testing.T) {
 	var m *Metadata
 	var a *AppController
 
-	var appErr IError
-
-	a = &AppController{}
-
-	appErr = a.Init()
-
-	if appErr != nil {
-		t.Errorf("TestValidMethod: AppController::Run() failed to Init with message: %s", appErr.Error())
-
-		return
-	}
+	a = testCreateController(testGetTestName(t))
 
 	iv = []string{"insert", "read", "delete"}
 
@@ -252,9 +165,115 @@ func TestValidMethod(t *testing.T) {
 		err, _ := a.Run(m)
 
 		if err != nil {
-			t.Errorf("TestValidMethod: ApplicationController::Run() returned an error: %s", err.Error())
+			t.Errorf("%s: ApplicationController::Run() returned an error: %s", testGetTestName(t), err.Error())
 
 			return
 		}
+	}
+}
+
+func TestSingleInsert(t *testing.T) {
+	var s []byte
+	var a *AppController
+	var m *Metadata
+
+	var runErr IError
+	var appResult *AppResult
+
+	a = testCreateController(testGetTestName(t))
+
+	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
+
+	m = &Metadata{
+		Method: InsertMethodType,
+		Data: &s,
+		Id: "id",
+	}
+
+	runErr, appResult = a.Run(m)
+
+	if runErr != nil {
+		t.Errorf("%s: AppController::Run returned an error: %s", testGetTestName(t), runErr.Error())
+
+		return
+	}
+
+	if appResult.Status != "ok" {
+		t.Errorf("%s: AppController::Run returned a non ok status but it should return ok", testGetTestName(t))
+
+		return
+	}
+
+	if appResult.Id != 0 {
+		t.Errorf("%s: AppController::Run invalid Id returned on inisert. Got %d, expected %d", testGetTestName(t), appResult.Id, 0)
+
+		return
+	}
+}
+
+func TestMultipleInsert(t *testing.T) {
+	var s []byte
+	var a *AppController
+	var m *Metadata
+
+	var appErr IError
+	var appResult *AppResult
+	var currId uint
+
+	a = testCreateController(testGetTestName(t))
+
+	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
+	for i := 0; i < 100000; i++ {
+		m = &Metadata{
+			Method: InsertMethodType,
+			Data: &s,
+			Id: fmt.Sprintf("id-%d", i),
+		}
+
+		appErr, appResult = a.Run(m)
+
+		if appErr != nil {
+			t.Errorf("%s: AppController::Run() returned an error: %s", testGetTestName(t), appErr.Error())
+
+			return
+		}
+
+		if appResult.Id != currId {
+			t.Errorf("%s: AppController::Run() there has been a discrepancy between generated id and counted id. Got %d, expected %d", testGetTestName(t), appResult.Id, currId)
+
+			return
+		}
+
+		currId++
+	}
+}
+
+func TestSingleRead(t *testing.T) {
+	var app *AppController
+	var m *Metadata
+	var runErr IError
+	var appResult *AppResult
+
+	app = testCreateController(testGetTestName(t))
+
+	fixtureSingleInsert("id", "id value", app, t, testGetTestName(t))
+
+	m = &Metadata{
+		Method: ReadMethodType,
+		Id:     "id",
+	}
+
+	runErr, appResult = app.Run(m)
+
+	if runErr != nil {
+		t.Errorf("%s resulted in an error: %s", testGetTestName(t), runErr.Error())
+
+		return
+	}
+
+	if appResult.Result != "id value" {
+		t.Errorf("%s invalid result: Got %s, expected %s", testGetTestName(t), appResult.Result, "id value")
+
+		return
 	}
 }
