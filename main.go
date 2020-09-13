@@ -17,7 +17,7 @@ func main() {
 		App: app,
 	}
 
-	fmt.Println("Rose server started. Listening to incoming requests")
+	fmt.Println(fmt.Sprintf("Rose server started on %s:%s. Listening to incoming requests", server.Host, server.Port))
 
 	server.Start()
 }
