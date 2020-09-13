@@ -97,6 +97,7 @@ func TestInvalidHttpPath(t *testing.T) {
 
 func TestBasicValidHttpInsert(t *testing.T) {
 	var rr *httptest.ResponseRecorder
+	var expected, given string
 
 	m := make(map[string]string)
 	m["method"] = InsertMethodType
@@ -108,7 +109,16 @@ func TestBasicValidHttpInsert(t *testing.T) {
 	rr = testCreateTestServer("POST", "/", bytes.NewReader(res), true, t)
 
 	if status := rr.Code; status != 200 {
-		t.Errorf("%s: Invalid status returned. Expected %d, got %d", testGetTestName(t), 200, status)
+		t.Errorf("%s: Invalid status returned. Expected %d, got %d; Response: %s", testGetTestName(t), 200, status, rr.Body.String())
+
+		return
+	}
+
+	expected = `{"id":0,"method":"insert","status":"ok","reason":"","result":""}`
+	given = rr.Body.String()
+
+	if expected != given {
+		t.Errorf("%s: Invalid result returned. Expected %s, got %s", testGetTestName(t), expected, given)
 
 		return
 	}

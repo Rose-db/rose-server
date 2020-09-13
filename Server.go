@@ -83,53 +83,22 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
-	var httpErr *HttpErrorResponse
-	var jErr error
 	var appErr IError
-	var model HttpRequestModel
-	var data []byte
 	var metadata *Metadata
+	var appResult *AppResult
+	var responseModel *HttpResponseModel
 
-	httpErr = s.Validate(r)
+	metadata = s.CreateMetadata(w, r)
 
-	if httpErr != nil {
-		s.SendError(httpErr, w)
-
+	if metadata == nil {
 		return
 	}
 
-	httpErr, body := s.ReadBody(r.Body, r.Method, w)
-
-	if httpErr != nil {
-		s.SendError(httpErr, w)
-
-		return
-	}
-
-	jErr = json.Unmarshal(body, &model)
-
-	if jErr != nil {
-		httpErr = &HttpErrorResponse{
-			Code:    SystemErrorCode,
-			Message: fmt.Sprintf("Could not read body. Error : %s", jErr.Error()),
-		}
-
-		s.SendError(httpErr, w)
-
-		return
-	}
-
-	data = []byte(model.Data)
-
-	metadata = &Metadata{
-		Method: model.Method,
-		Id:     model.Id,
-		Data:   &data,
-	}
-
-	appErr, _ = s.App.Run(metadata)
+	appErr, appResult = s.App.Run(metadata)
 
 	if appErr != nil {
+		var httpErr *HttpErrorResponse
+
 		httpErr = &HttpErrorResponse{
 			Code:    appErr.GetCode(),
 			Message: appErr.Error(),
@@ -139,6 +108,16 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	responseModel = &HttpResponseModel{
+		Id:     appResult.Id,
+		Method: appResult.Method,
+		Status: appResult.Status,
+		Reason: "",
+		Result: appResult.Result,
+	}
+
+	s.SendSuccess(responseModel, w)
 }
 
 func (s *Server) SendError(res *HttpErrorResponse, w http.ResponseWriter) {
@@ -176,7 +155,7 @@ func (s *Server) SendSuccess(res *HttpResponseModel, w http.ResponseWriter) {
 		return
 	}
 
-	s.SendResponse(body, 400, w)
+	s.SendResponse(body, 200, w)
 }
 
 func (s *Server) ReadBody(b io.Reader, method string, w http.ResponseWriter) (*HttpErrorResponse, []byte) {
@@ -213,5 +192,49 @@ func (s *Server) SendResponse(body []byte, status int, w http.ResponseWriter) {
 		body, _ = json.Marshal(r)
 
 		_, _ = w.Write(body)
+	}
+}
+
+func (s *Server) CreateMetadata(w http.ResponseWriter, r *http.Request) *Metadata {
+	var httpErr *HttpErrorResponse
+	var jErr error
+	var model HttpRequestModel
+	var data []byte
+
+	httpErr = s.Validate(r)
+
+	if httpErr != nil {
+		s.SendError(httpErr, w)
+
+		return nil
+	}
+
+	httpErr, body := s.ReadBody(r.Body, r.Method, w)
+
+	if httpErr != nil {
+		s.SendError(httpErr, w)
+
+		return nil
+	}
+
+	jErr = json.Unmarshal(body, &model)
+
+	if jErr != nil {
+		httpErr = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: fmt.Sprintf("Could not read body. Error : %s", jErr.Error()),
+		}
+
+		s.SendError(httpErr, w)
+
+		return nil
+	}
+
+	data = []byte(model.Data)
+
+	return &Metadata{
+		Method: model.Method,
+		Id:     model.Id,
+		Data:   &data,
 	}
 }

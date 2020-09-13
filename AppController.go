@@ -31,13 +31,13 @@ func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
 		return nil, &AppResult{
 			Id:     idx,
 			Method: m.Method,
-			Status: "ok",
+			Status: OkResultStatus,
 		}
 	} else if m.Method == DeleteMethodType {
 		return nil, &AppResult{
 			Id:     1,
 			Method: m.Method,
-			Status: "ok",
+			Status: OkResultStatus,
 		}
 	} else if m.Method == ReadMethodType {
 		res = a.Database.Read(m.Id)
@@ -45,7 +45,7 @@ func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
 		return nil, &AppResult{
 			Id:     1,
 			Method: m.Method,
-			Status: "ok",
+			Status: OkResultStatus,
 			Result: res,
 		}
 	}

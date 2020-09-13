@@ -9,6 +9,9 @@ const HttpErrorCode = 1
 const SystemErrorCode = 2
 const InvalidRequestCode = 3
 
+const OkResultStatus = "ok"
+const FailResultStatus = "fail"
+
 const InsertMethodType = "insert"
 const DeleteMethodType = "delete"
 const ReadMethodType = "read"
