@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
@@ -52,8 +51,11 @@ func (s *Server) Start() {
 		fmt.Printf("An error occurred when starting Rose: %s\n", err.Error())
 		fmt.Println("Shutting down the server gracefully...")
 
+		// starting graceful shutdown of the server. all connections will be completed
+		// it the context timeframe.
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
+
 		if err := srv.Shutdown(ctx); err != nil {
 			panic(err)
 		}
@@ -81,18 +83,32 @@ func (s *Server) HandleError(w http.ResponseWriter, r *http.Request, res *HttpEr
 }
 
 func SendResponse(r *HttpErrorResponse, w http.ResponseWriter, status int) {
+	var body []byte
+	var jsonErr error
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	body, jsonErr := json.Marshal(r)
+	body, jsonErr = json.Marshal(r)
 
 	if jsonErr != nil {
-		log.Fatal(jsonErr)
+		r = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: "Could not create JSON from body. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
+		}
+
+		body, _ = json.Marshal(r)
 	}
 
 	_, err := w.Write(body)
 
 	if err != nil {
-		log.Fatal(err)
+		r = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: "Could not write body to a response. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
+		}
+
+		body, _ = json.Marshal(r)
+
+		_, _ = w.Write(body)
 	}
 }
