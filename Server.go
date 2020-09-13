@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -11,6 +13,12 @@ import (
 type HttpErrorResponse struct {
 	Code int `json:"code"`
 	Message string `json:"message"`
+}
+
+type HttpRequestModel struct {
+	Method 	string `json:"method"`
+	Id 		string `json:"id"`
+	Data 	string `json:"data"`
 }
 
 type Server struct {
@@ -67,19 +75,83 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
-	var err *HttpErrorResponse
+	var httpErr *HttpErrorResponse
+	var jErr error
+	var appErr IError
+	var model HttpRequestModel
+	var data []byte
+	var metadata *Metadata
 
-	err = s.Validate(r)
+	httpErr = s.Validate(r)
 
-	if err != nil {
-		s.HandleError(w, r, err)
+	if httpErr != nil {
+		s.HandleError(w, httpErr)
+
+		return
+	}
+
+	httpErr, body := s.ReadBody(r.Body, r.Method, w)
+
+	if httpErr != nil {
+		s.HandleError(w, httpErr)
+
+		return
+	}
+
+	jErr = json.Unmarshal(body, &model)
+
+	if jErr != nil {
+		httpErr = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: fmt.Sprintf("Could not read body. Error : %s", jErr.Error()),
+		}
+
+		s.HandleError(w, httpErr)
+
+		return
+	}
+
+	data = []byte(model.Data)
+
+	metadata = &Metadata{
+		Method: model.Method,
+		Id:     model.Id,
+		Data:   &data,
+	}
+
+	appErr, _ = s.App.Run(metadata)
+
+	if appErr != nil {
+		httpErr = &HttpErrorResponse{
+			Code:    appErr.GetCode(),
+			Message: appErr.Error(),
+		}
+
+		s.HandleError(w, httpErr)
 
 		return
 	}
 }
 
-func (s *Server) HandleError(w http.ResponseWriter, r *http.Request, res *HttpErrorResponse) {
+func (s *Server) HandleError(w http.ResponseWriter, res *HttpErrorResponse) {
 	SendResponse(res, w, 400)
+}
+
+func (s *Server) ReadBody(b io.Reader, method string, w http.ResponseWriter) (*HttpErrorResponse, []byte) {
+	var r *HttpErrorResponse
+
+	body, err := ioutil.ReadAll(b)
+
+	if err != nil {
+		r = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: "Could not create JSON from body. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
+		}
+
+		return r, nil
+	}
+
+	return nil, body
 }
 
 func SendResponse(r *HttpErrorResponse, w http.ResponseWriter, status int) {
