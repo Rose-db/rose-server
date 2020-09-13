@@ -21,6 +21,14 @@ type HttpRequestModel struct {
 	Data 	string `json:"data"`
 }
 
+type HttpResponseModel struct {
+	Id uint 		`json:"id"`
+	Method string	`json:"method"`
+	Status string	`json:"status"`
+	Reason string	`json:"reason"`
+	Result string	`json:"result"`
+}
+
 type Server struct {
 	Host string
 	Port string
@@ -85,7 +93,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 	httpErr = s.Validate(r)
 
 	if httpErr != nil {
-		s.HandleError(w, httpErr)
+		s.SendError(httpErr, w)
 
 		return
 	}
@@ -93,7 +101,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 	httpErr, body := s.ReadBody(r.Body, r.Method, w)
 
 	if httpErr != nil {
-		s.HandleError(w, httpErr)
+		s.SendError(httpErr, w)
 
 		return
 	}
@@ -106,7 +114,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 			Message: fmt.Sprintf("Could not read body. Error : %s", jErr.Error()),
 		}
 
-		s.HandleError(w, httpErr)
+		s.SendError(httpErr, w)
 
 		return
 	}
@@ -127,14 +135,48 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 			Message: appErr.Error(),
 		}
 
-		s.HandleError(w, httpErr)
+		s.SendError(httpErr, w)
 
 		return
 	}
 }
 
-func (s *Server) HandleError(w http.ResponseWriter, res *HttpErrorResponse) {
-	SendResponse(res, w, 400)
+func (s *Server) SendError(res *HttpErrorResponse, w http.ResponseWriter) {
+	var jsonErr error
+	var body []byte
+
+	body, jsonErr = json.Marshal(res)
+
+	if jsonErr != nil {
+		var r *HttpErrorResponse
+
+		r = &HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: "There has been an error but could not create the body for it. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
+		}
+
+		body, _ = json.Marshal(r)
+	}
+
+	s.SendResponse(body, 400, w)
+}
+
+func (s *Server) SendSuccess(res *HttpResponseModel, w http.ResponseWriter) {
+	var jsonErr error
+	var body []byte
+
+	body, jsonErr = json.Marshal(res)
+
+	if jsonErr != nil {
+		s.SendError(&HttpErrorResponse{
+			Code:    SystemErrorCode,
+			Message: "There has been an error but could not create the body for it. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
+		}, w)
+
+		return
+	}
+
+	s.SendResponse(body, 400, w)
 }
 
 func (s *Server) ReadBody(b io.Reader, method string, w http.ResponseWriter) (*HttpErrorResponse, []byte) {
@@ -154,26 +196,15 @@ func (s *Server) ReadBody(b io.Reader, method string, w http.ResponseWriter) (*H
 	return nil, body
 }
 
-func SendResponse(r *HttpErrorResponse, w http.ResponseWriter, status int) {
-	var body []byte
-	var jsonErr error
+func (s *Server) SendResponse(body []byte, status int, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-
-	body, jsonErr = json.Marshal(r)
-
-	if jsonErr != nil {
-		r = &HttpErrorResponse{
-			Code:    SystemErrorCode,
-			Message: "Could not create JSON from body. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
-		}
-
-		body, _ = json.Marshal(r)
-	}
 
 	_, err := w.Write(body)
 
 	if err != nil {
+		var r *HttpErrorResponse
+
 		r = &HttpErrorResponse{
 			Code:    SystemErrorCode,
 			Message: "Could not write body to a response. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
