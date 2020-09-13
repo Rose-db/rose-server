@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 type HttpErrorResponse struct {
@@ -15,6 +17,7 @@ type HttpErrorResponse struct {
 type Server struct {
 	Host string
 	Port string
+	Server *http.Server
 	App *AppController
 }
 
@@ -37,24 +40,37 @@ func (s *Server) Validate(r *http.Request) *HttpErrorResponse {
 }
 
 func (s *Server) Start() {
+	var srv *http.Server
+
+	srv = &http.Server{Addr: fmt.Sprintf(fmt.Sprintf("%s:%s", s.Host, s.Port))}
+
 	http.HandleFunc("/", s.Handle)
 
 	err := http.ListenAndServe(fmt.Sprintf("%s:%s", s.Host, s.Port), nil)
 
 	if err != nil {
 		fmt.Printf("An error occurred when starting Rose: %s\n", err.Error())
+		fmt.Println("Shutting down the server gracefully...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			panic(err)
+		}
 
 		return
 	}
+
+	s.Server = srv
 }
 
 func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
-	var res *HttpErrorResponse
+	var err *HttpErrorResponse
 
-	res = s.Validate(r)
+	err = s.Validate(r)
 
-	if res != nil {
-		s.HandleError(w, r, res)
+	if err != nil {
+		s.HandleError(w, r, err)
 
 		return
 	}
