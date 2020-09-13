@@ -14,7 +14,7 @@ func benchmarkInsert(i int, a *AppController, m *Metadata, b *testing.B) {
 	}
 }
 
-func BenchmarkInsertHundred(b *testing.B) {
+func BenchmarkDirectInsertHundred(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
@@ -33,7 +33,7 @@ func BenchmarkInsertHundred(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertThousand(b *testing.B) {
+func BenchmarkDirectInsertThousand(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
@@ -52,7 +52,7 @@ func BenchmarkInsertThousand(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertTenThousand(b *testing.B) {
+func BenchmarkDirectInsertTenThousand(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
@@ -71,7 +71,7 @@ func BenchmarkInsertTenThousand(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertHundredThousand(b *testing.B) {
+func BenchmarkDirectInsertHundredThousand(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
@@ -90,7 +90,7 @@ func BenchmarkInsertHundredThousand(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertMillion(b *testing.B) {
+func BenchmarkDirectInsertMillion(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
@@ -109,7 +109,7 @@ func BenchmarkInsertMillion(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertHundredMillion(b *testing.B) {
+func BenchmarkDirectInsertHundredMillion(b *testing.B) {
 	var s []byte
 	var a *AppController
 	var m *Metadata
