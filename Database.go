@@ -86,6 +86,9 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 	
 	d.RWMutex.Unlock()
 
+	// an entry is written to the fs database only if writing to memory went well
+	go FsWrite(idx, v)
+
 	return computedIdx
 }
 

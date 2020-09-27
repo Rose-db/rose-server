@@ -24,6 +24,11 @@ type DbReadError struct {
 	Message string
 }
 
+type DbIntegrityError struct {
+	Code int
+	Message string
+}
+
 
 
 func (e *SystemError) Error() string {
@@ -41,6 +46,25 @@ func (e *SystemError) GetCode() int {
 func (e *SystemError) JSON() map[string]interface{} {
 	return map[string]interface{}{}
 }
+
+
+
+func (e *DbIntegrityError) Error() string {
+	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
+}
+
+func (e *DbIntegrityError) Type() string {
+	return SystemErrorType
+}
+
+func (e *DbIntegrityError) GetCode() int {
+	return SystemErrorCode
+}
+
+func (e *DbIntegrityError) JSON() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
 
 
 

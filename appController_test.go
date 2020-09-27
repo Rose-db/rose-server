@@ -2,74 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"sort"
 	"testing"
 	"time"
 )
-
-func testCreateController(testName string) *AppController {
-	var a *AppController
-	var appErr IError
-	var errStream chan IError
-
-	a = &AppController{}
-	errStream = a.Init(false)
-
-	appErr = <- errStream
-
-	if appErr != nil {
-		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
-	}
-
-	return a
-}
-
-func testRemoveFileSystemDb(t *testing.T) {
-	h := UserHomeDir()
-	roseDb := fmt.Sprintf("%s/.rose_db", h)
-
-	if _, err := os.Stat(roseDb); os.IsNotExist(err) {
-		t.Errorf("%s: Database directory .rose_db was not created in %s", h, testGetTestName(t))
-
-		return
-	}
-
-	rmErr := os.RemoveAll(roseDb)
-	if rmErr != nil {
-		t.Errorf("%s: Database directory failed to remove", testGetTestName(t))
-	}
-}
-
-func testGetBenchmarkName(t *testing.B) string {
-	v := reflect.ValueOf(*t)
-	return v.FieldByName("name").String()
-}
-
-func testGetTestName(t *testing.T) string {
-	v := reflect.ValueOf(*t)
-	return v.FieldByName("name").String()
-}
-
-func fixtureSingleInsert(id string, value string, a *AppController, t *testing.T, testName string) {
-	var s []byte
-	var m *Metadata
-	var appErr IError
-	s = []byte(value)
-
-	m = &Metadata{
-		Method: InsertMethodType,
-		Data: &s,
-		Id: id,
-	}
-
-	appErr, _ = a.Run(m)
-
-	if appErr != nil {
-		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
-	}
-}
 
 func TestDatabaseDirCreated(t *testing.T) {
 	var m *Metadata
@@ -390,5 +329,81 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 		}
 
 		currId++
+	}
+}
+
+
+func testCreateController(testName string) *AppController {
+	var a *AppController
+	var appErr IError
+	var errStream chan IError
+
+	a = &AppController{}
+	errStream = a.Init(false)
+
+	appErr = <- errStream
+
+	if appErr != nil {
+		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
+	}
+
+	return a
+}
+
+func testRemoveFileSystemDb(t *testing.T) {
+	var roseDir string
+
+	roseDir = RoseDir()
+	if _, err := os.Stat(roseDir); os.IsNotExist(err) {
+		t.Errorf("%s: Database directory .rose_db was not created in %s", roseDir, testGetTestName(t))
+
+		return
+	}
+
+	files, err := ioutil.ReadDir(roseDir)
+
+	if err != nil {
+		t.Errorf("%s: Removing %s failed with message %s", roseDir, testGetTestName(t), err.Error())
+
+		return
+	}
+
+	for _, f := range files {
+		err = os.Remove(fmt.Sprintf("%s/%s", roseDir, f.Name()))
+
+		if err != nil {
+			t.Errorf("%s: Removing %s failed with message %s", roseDir, testGetTestName(t), err.Error())
+
+			return
+		}
+	}
+}
+
+func testGetBenchmarkName(t *testing.B) string {
+	v := reflect.ValueOf(*t)
+	return v.FieldByName("name").String()
+}
+
+func testGetTestName(t *testing.T) string {
+	v := reflect.ValueOf(*t)
+	return v.FieldByName("name").String()
+}
+
+func fixtureSingleInsert(id string, value string, a *AppController, t *testing.T, testName string) {
+	var s []byte
+	var m *Metadata
+	var appErr IError
+	s = []byte(value)
+
+	m = &Metadata{
+		Method: InsertMethodType,
+		Data: &s,
+		Id: id,
+	}
+
+	appErr, _ = a.Run(m)
+
+	if appErr != nil {
+		panic(fmt.Sprintf("%s: fixtureInsertSingle: AppController failed to Init with message: %s", testName, appErr.Error()))
 	}
 }
