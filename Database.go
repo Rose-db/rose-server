@@ -74,11 +74,11 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 
 	if !ok {
 		m = &[3000]*[]uint8{}
+		d.InternalDb[d.CurrMapIdx] = m
 	}
 
 	m[idx] = v
 
-	d.InternalDb[d.CurrMapIdx] = m
 	computedIdx = idx + (d.CurrMapIdx * 3000)
 
 	if idx == 2999 {
