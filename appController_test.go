@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -314,10 +315,11 @@ func TestSingleReadNotFound(t *testing.T) {
 }
 
 func TestMultipleConcurrentRequests(t *testing.T) {
-	t.Skip()
 	var s []byte
 	var a *AppController
 	var m *Metadata
+
+	var readIds []int
 
 	var appErr IError
 	var appResult *AppResult
@@ -335,6 +337,7 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 		go a.Run(m)
 	}
 
+	// if there is a panic in regards to read/write, increase sleep duration
 	time.Sleep(2 * time.Second)
 
 	for i := 0; i < 100; i++ {
@@ -352,6 +355,20 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 			return
 		}
 
-		fmt.Println(appResult.Id)
+		readIds = append(readIds, int(appResult.Id))
+	}
+
+	sort.Ints(readIds)
+
+	currId := 0
+
+	for _, v := range readIds {
+		if currId != v {
+			t.Errorf("%s: Invalid idx given. Expected %d, got %d", testGetTestName(t), currId, v)
+
+			return
+		}
+
+		currId++
 	}
 }
