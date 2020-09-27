@@ -1,5 +1,10 @@
 package main
 
+/**
+	Creates the next id to be generated. It only generates id <= IdFactory.Max.
+	How these ids are represented in the database is handled by the Database
+	struct. After it reaches IdFactory.Max, it resets to 0.
+ */
 type IdFactory struct {
 	Max uint16
 	CurrIdx uint16

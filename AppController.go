@@ -17,7 +17,6 @@ type AppResult struct {
 func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
 	var vErr IError
 	var idx uint
-	var res string
 
 	vErr = m.Validate()
 
@@ -31,22 +30,34 @@ func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
 		return nil, &AppResult{
 			Id:     idx,
 			Method: m.Method,
-			Status: OkResultStatus,
+			Status: FoundResultStatus,
 		}
 	} else if m.Method == DeleteMethodType {
 		return nil, &AppResult{
 			Id:     1,
 			Method: m.Method,
-			Status: OkResultStatus,
+			Status: FoundResultStatus,
 		}
 	} else if m.Method == ReadMethodType {
-		res = a.Database.Read(m.Id)
+		var res *DbReadResult
+		var err *DbReadError
+		res, err = a.Database.Read(m.Id)
+
+		if err != nil {
+			return nil, &AppResult{
+				Id:     0,
+				Method: m.Method,
+				Status: NotFoundResultStatus,
+				Reason: err.Error(),
+				Result: "",
+			}
+		}
 
 		return nil, &AppResult{
-			Id:     1,
+			Id:     res.Idx,
 			Method: m.Method,
-			Status: OkResultStatus,
-			Result: res,
+			Status: FoundResultStatus,
+			Result: res.Result,
 		}
 	}
 

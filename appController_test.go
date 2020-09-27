@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func testCreateController(testName string) *AppController {
@@ -271,9 +272,86 @@ func TestSingleRead(t *testing.T) {
 		return
 	}
 
+	if appResult.Status != FoundResultStatus {
+		t.Errorf("%s invalid result not-found status: %s", testGetTestName(t), appResult.Reason)
+
+		return
+	}
+
 	if appResult.Result != "id value" {
 		t.Errorf("%s invalid result: Got %s, expected %s", testGetTestName(t), appResult.Result, "id value")
 
 		return
+	}
+}
+
+func TestSingleReadNotFound(t *testing.T) {
+	var app *AppController
+	var m *Metadata
+	var runErr IError
+	var appResult *AppResult
+
+	app = testCreateController(testGetTestName(t))
+
+	m = &Metadata{
+		Method: ReadMethodType,
+		Id:     "id",
+	}
+
+	runErr, appResult = app.Run(m)
+
+	if runErr != nil {
+		t.Errorf("%s resulted in an error: %s", testGetTestName(t), runErr.Error())
+
+		return
+	}
+
+	if appResult.Status != NotFoundResultStatus {
+		t.Errorf("%s invalid result: Expected %s, got %s", testGetTestName(t), NotFoundResultStatus, appResult.Status)
+
+		return
+	}
+}
+
+func TestMultipleConcurrentRequests(t *testing.T) {
+	t.Skip()
+	var s []byte
+	var a *AppController
+	var m *Metadata
+
+	var appErr IError
+	var appResult *AppResult
+
+	a = testCreateController(testGetTestName(t))
+
+	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
+	for i := 0; i < 100; i++ {
+		m = &Metadata{
+			Method: InsertMethodType,
+			Data: &s,
+			Id: fmt.Sprintf("id-%d", i),
+		}
+
+		go a.Run(m)
+	}
+
+	time.Sleep(2 * time.Second)
+
+	for i := 0; i < 100; i++ {
+		m = &Metadata{
+			Method: ReadMethodType,
+			Data: &s,
+			Id: fmt.Sprintf("id-%d", i),
+		}
+
+		appErr, appResult = a.Run(m)
+
+		if appErr != nil {
+			t.Errorf("%s: AppController::Run() returned an error: %s", testGetTestName(t), appErr.Error())
+
+			return
+		}
+
+		fmt.Println(appResult.Id)
 	}
 }
