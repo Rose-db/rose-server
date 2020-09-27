@@ -67,9 +67,6 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 	// r/w operation
 	idx = d.IdFactory.Next()
 
-	// r operation
-	d.IdLookupMap[id] = idx
-
 	m, ok := d.InternalDb[d.CurrMapIdx]
 
 	if !ok {
@@ -77,6 +74,8 @@ func (d *Database) Insert(id string, v *[]uint8) uint {
 		d.InternalDb[d.CurrMapIdx] = m
 	}
 
+	// r operation
+	d.IdLookupMap[id] = idx
 	m[idx] = v
 
 	computedIdx = idx + (d.CurrMapIdx * 3000)

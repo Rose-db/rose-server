@@ -26,6 +26,22 @@ func testCreateController(testName string) *AppController {
 	return a
 }
 
+func testRemoveFileSystemDb(t *testing.T) {
+	h := UserHomeDir()
+	roseDb := fmt.Sprintf("%s/.rose_db", h)
+
+	if _, err := os.Stat(roseDb); os.IsNotExist(err) {
+		t.Errorf("%s: Database directory .rose_db was not created in %s", h, testGetTestName(t))
+
+		return
+	}
+
+	rmErr := os.RemoveAll(roseDb)
+	if rmErr != nil {
+		t.Errorf("%s: Database directory failed to remove", testGetTestName(t))
+	}
+}
+
 func testGetBenchmarkName(t *testing.B) string {
 	v := reflect.ValueOf(*t)
 	return v.FieldByName("name").String()
@@ -59,6 +75,7 @@ func TestDatabaseDirCreated(t *testing.T) {
 	var m *Metadata
 	var a *AppController
 
+	defer testRemoveFileSystemDb(t)
 	a = testCreateController(testGetTestName(t))
 
 	m = &Metadata{
@@ -75,25 +92,14 @@ func TestDatabaseDirCreated(t *testing.T) {
 		return
 	}
 
-	h := UserHomeDir()
-	roseDb := fmt.Sprintf("%s/.rose_db", h)
-
-	if _, err := os.Stat(roseDb); os.IsNotExist(err) {
-		t.Errorf("%s: Database directory .rose_db was not created in %s", h, testGetTestName(t))
-
-		return
-	}
-
-	rmErr := os.RemoveAll(roseDb)
-	if rmErr != nil {
-		t.Errorf("%s: Database directory failed to remove", testGetTestName(t))
-	}
 }
 
 func TestInvalidMethod(t *testing.T) {
 	var iv []string
 	var m *Metadata
 	var a *AppController
+
+	defer testRemoveFileSystemDb(t)
 
 	a = testCreateController(testGetTestName(t))
 
@@ -129,6 +135,8 @@ func TestInvalidId(t *testing.T) {
 	var m *Metadata
 	var a *AppController
 
+	defer testRemoveFileSystemDb(t)
+
 	a = testCreateController(testGetTestName(t))
 
 	iv = []string{"insert", "read", "delete"}
@@ -152,6 +160,8 @@ func TestValidMethod(t *testing.T) {
 	var iv []string
 	var m *Metadata
 	var a *AppController
+
+	defer testRemoveFileSystemDb(t)
 
 	a = testCreateController(testGetTestName(t))
 
@@ -181,6 +191,8 @@ func TestSingleInsert(t *testing.T) {
 
 	var runErr IError
 	var appResult *AppResult
+
+	defer testRemoveFileSystemDb(t)
 
 	a = testCreateController(testGetTestName(t))
 
@@ -222,6 +234,8 @@ func TestMultipleInsert(t *testing.T) {
 	var appResult *AppResult
 	var currId uint
 
+	defer testRemoveFileSystemDb(t)
+
 	a = testCreateController(testGetTestName(t))
 
 	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
@@ -255,6 +269,8 @@ func TestSingleRead(t *testing.T) {
 	var m *Metadata
 	var runErr IError
 	var appResult *AppResult
+
+	defer testRemoveFileSystemDb(t)
 
 	app = testCreateController(testGetTestName(t))
 
@@ -292,6 +308,8 @@ func TestSingleReadNotFound(t *testing.T) {
 	var runErr IError
 	var appResult *AppResult
 
+	defer testRemoveFileSystemDb(t)
+
 	app = testCreateController(testGetTestName(t))
 
 	m = &Metadata{
@@ -323,6 +341,8 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 
 	var appErr IError
 	var appResult *AppResult
+
+	defer testRemoveFileSystemDb(t)
 
 	a = testCreateController(testGetTestName(t))
 
