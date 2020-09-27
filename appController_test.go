@@ -178,7 +178,7 @@ func TestMultipleInsert(t *testing.T) {
 	a = testCreateController(testGetTestName(t))
 
 	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 5000; i++ {
 		m = &Metadata{
 			Method: InsertMethodType,
 			Data: &s,

@@ -4,6 +4,7 @@ import "fmt"
 
 type AppController struct {
 	Database *Database
+	FsJobQueue *FsJobQueue
 }
 
 type AppResult struct {
@@ -26,6 +27,15 @@ func (a *AppController) Run(m *Metadata) (IError, *AppResult) {
 
 	if m.Method == InsertMethodType {
 		idx = a.Database.Insert(m.Id, m.Data)
+
+		a.FsJobQueue.Add(&Job{
+			Id:    idx,
+			Value: m.Data,
+		})
+
+		if a.FsJobQueue.LimitReached() {
+			a.FsJobQueue.Consume()
+		}
 
 		return nil, &AppResult{
 			Id:     idx,
@@ -80,8 +90,11 @@ func (a *AppController) Init(log bool) chan IError {
 	}
 
 	a.Database = &Database{}
-
 	a.Database.Init()
+
+	a.FsJobQueue = &FsJobQueue{
+		Limit:   256,
+	}
 
 	return errStream
 }
