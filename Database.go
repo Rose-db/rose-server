@@ -35,18 +35,21 @@ type Database struct {
 	CurrMapIdx uint
 }
 
-func (d *Database) Init() {
+func NewDatabase() *Database {
+	d := &Database{}
+
 	d.InternalDb = make(map[uint]*[3000]*[]uint8)
 	d.InternalDb[0] = &[3000]*[]uint8{}
 	d.RWMutex = &sync.RWMutex{}
 
 	d.IdLookupMap = make(map[string]uint)
 
-	m := &IdFactory{}
-	m.Init()
+	m := NewIdFactory()
 
 	d.IdFactory = m
 	d.CurrMapIdx = 0
+
+	return d
 }
 
 /**

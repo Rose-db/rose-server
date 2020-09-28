@@ -10,9 +10,11 @@ type IdFactory struct {
 	CurrIdx uint16
 }
 
-func (m *IdFactory) Init() {
-	m.Max = 2999
-	m.CurrIdx = 0
+func NewIdFactory() *IdFactory {
+	return &IdFactory{
+		Max: 2999,
+		CurrIdx: 0,
+	}
 }
 
 func (m *IdFactory) Next() uint {

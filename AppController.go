@@ -89,12 +89,9 @@ func (a *AppController) Init(log bool) chan IError {
 		}
 	}
 
-	a.Database = &Database{}
-	a.Database.Init()
+	a.Database = NewDatabase()
 
-	a.FsJobQueue = &FsJobQueue{
-		Limit:   256,
-	}
+	a.FsJobQueue = NewJobQueue(255)
 
 	return errStream
 }

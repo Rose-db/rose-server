@@ -14,6 +14,12 @@ type Job struct {
 	Value *[]byte
 }
 
+func NewJobQueue(limit int) *FsJobQueue {
+	return &FsJobQueue{
+		Limit: limit,
+	}
+}
+
 func (jq *FsJobQueue) LimitReached() bool {
 	return len(jq.JobBuffer) >= jq.Limit
 }

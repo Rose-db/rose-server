@@ -9,9 +9,7 @@ func TestIdGenerationWithinRange(t *testing.T) {
 	var iterations int = 0
 	var currId uint = 0
 
-	fac = &IdFactory{}
-
-	fac.Init()
+	fac = NewIdFactory()
 
 	for {
 		if iterations == 10000000 {
