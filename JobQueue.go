@@ -2,11 +2,13 @@ package main
 
 import (
 	"sync"
+	"time"
 )
 
 type FsJobQueue struct {
 	Limit int
-	JobBuffer []*Job
+	Open int
+	Lock *sync.RWMutex
 }
 
 type Job struct {
@@ -17,31 +19,23 @@ type Job struct {
 func NewJobQueue(limit int) *FsJobQueue {
 	return &FsJobQueue{
 		Limit: limit,
+		Lock: &sync.RWMutex{},
+		Open: 0,
 	}
 }
 
-func (jq *FsJobQueue) LimitReached() bool {
-	return len(jq.JobBuffer) >= jq.Limit
-}
+func (jq *FsJobQueue) Run(j *Job) {
+	jq.Lock.Lock()
+	jq.Open++
+	jq.Lock.Unlock()
 
-func (jq *FsJobQueue) Add(j *Job) {
-	jq.JobBuffer = append(jq.JobBuffer, j)
-}
-
-func (jq *FsJobQueue) Consume() {
-	wg := &sync.WaitGroup{}
-	wg.Add(len(jq.JobBuffer))
-
-	for _, j := range jq.JobBuffer {
-		go func(j *Job, wg *sync.WaitGroup) {
-			FsWrite(j.Id, j.Value)
-
-			wg.Done()
-		}(j, wg)
+	if jq.Open >= jq.Limit {
+		time.Sleep(2000 * time.Millisecond)
 	}
 
-	jq.JobBuffer = nil
-	jq.JobBuffer = []*Job{}
+	FsWrite(j.Id, j.Value)
 
-	wg.Wait()
+	jq.Lock.Lock()
+	jq.Open--
+	jq.Lock.Unlock()
 }

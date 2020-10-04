@@ -40,14 +40,10 @@ func (a *AppController) insert(m *Metadata) (IError, *AppResult) {
 
 	idx = a.Database.Insert(m.Id, m.Data)
 
-	/*		a.FsJobQueue.Add(&Job{
-				Id:    idx,
-				Value: m.Data,
-			})
-
-			if a.FsJobQueue.LimitReached() {
-				a.FsJobQueue.Consume()
-			}*/
+	go a.FsJobQueue.Run(&Job{
+		Id:    idx,
+		Value: m.Data,
+	})
 
 	return nil, &AppResult{
 		Id:     idx,
@@ -104,7 +100,7 @@ func (a *AppController) Init(log bool) chan IError {
 
 	a.Database = NewDatabase()
 
-	a.FsJobQueue = NewJobQueue(255)
+	a.FsJobQueue = NewJobQueue(200)
 
 	return errStream
 }

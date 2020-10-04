@@ -139,8 +139,8 @@ func TestSingleInsert(t *testing.T) {
 
 	m = &Metadata{
 		Method: InsertMethodType,
-		Data: &s,
-		Id: "id",
+		Data:   &s,
+		Id:     "id",
 	}
 
 	runErr, appResult = a.Run(m)
@@ -178,11 +178,11 @@ func TestMultipleInsert(t *testing.T) {
 	a = testCreateController(testGetTestName(t))
 
 	s = []byte("sdčkfjalsčkjfdlsčakdfjlčk")
-	for i := 0; i < 5000; i++ {
+	for i := 0; i < 500000; i++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", i),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", i),
 		}
 
 		appErr, appResult = a.Run(m)
@@ -289,8 +289,8 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", i),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", i),
 		}
 
 		go a.Run(m)
@@ -302,8 +302,8 @@ func TestMultipleConcurrentRequests(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		m = &Metadata{
 			Method: ReadMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", i),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", i),
 		}
 
 		appErr, appResult = a.Run(m)
@@ -397,8 +397,8 @@ func fixtureSingleInsert(id string, value string, a *AppController, t *testing.T
 
 	m = &Metadata{
 		Method: InsertMethodType,
-		Data: &s,
-		Id: id,
+		Data:   &s,
+		Id:     id,
 	}
 
 	appErr, _ = a.Run(m)

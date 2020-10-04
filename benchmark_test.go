@@ -31,8 +31,8 @@ func BenchmarkDirectInsertHundred(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(100, a, m)
@@ -50,8 +50,8 @@ func BenchmarkDirectInsertThousand(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(1000, a, m)
@@ -69,8 +69,8 @@ func BenchmarkDirectInsertTenThousand(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(10000, a, m)
@@ -88,8 +88,8 @@ func BenchmarkDirectInsertHundredThousand(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(100000, a, m)
@@ -107,8 +107,8 @@ func BenchmarkDirectInsertMillion(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(1000000, a, m)
@@ -128,8 +128,8 @@ func BenchmarkDirectInsertHundredMillion(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m = &Metadata{
 			Method: InsertMethodType,
-			Data: &s,
-			Id: fmt.Sprintf("id-%d", n),
+			Data:   &s,
+			Id:     fmt.Sprintf("id-%d", n),
 		}
 
 		benchmarkDirectInsert(100000000, a, m)
