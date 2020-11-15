@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"rose/rose"
 	"time"
 )
 
@@ -22,7 +23,6 @@ type HttpRequestModel struct {
 }
 
 type HttpResponseModel struct {
-	Id uint 		`json:"id"`
 	Method string	`json:"method"`
 	Status string	`json:"status"`
 	Reason string	`json:"reason"`
@@ -33,20 +33,20 @@ type Server struct {
 	Host string
 	Port string
 	Server *http.Server
-	App *AppController
+	App *rose.Rose
 }
 
 func (s *Server) Validate(r *http.Request) *HttpErrorResponse {
 	if (*r).Method != "POST" {
 		return &HttpErrorResponse{
-			Code:    InvalidRequestCode,
+			Code:    rose.InvalidRequestCode,
 			Message: fmt.Sprintf("Invalid HTTP method. Expected POST, got %s", (*r).Method),
 		}
 	}
 
 	if r.URL.Path != "/" {
 		return &HttpErrorResponse{
-			Code:    InvalidRequestCode,
+			Code:    rose.InvalidRequestCode,
 			Message: fmt.Sprintf("Invalid HTTP path. Expected /, got %s", (*r).URL.Path),
 		}
 	}
@@ -83,9 +83,9 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
-	var appErr IError
-	var metadata *Metadata
-	var appResult *AppResult
+	var appErr rose.Error
+	var metadata *rose.Metadata
+	var appResult *rose.AppResult
 	var responseModel *HttpResponseModel
 
 	metadata = s.CreateMetadata(w, r)
@@ -94,7 +94,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appErr, appResult = s.App.Run(metadata)
+	appResult, appErr = s.App.Write(metadata)
 
 	if appErr != nil {
 		var httpErr *HttpErrorResponse
@@ -110,11 +110,9 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseModel = &HttpResponseModel{
-		Id:     appResult.Id,
 		Method: appResult.Method,
 		Status: appResult.Status,
 		Reason: "",
-		Result: appResult.Result,
 	}
 
 	s.SendSuccess(responseModel, w)
@@ -130,7 +128,7 @@ func (s *Server) SendError(res *HttpErrorResponse, w http.ResponseWriter) {
 		var r *HttpErrorResponse
 
 		r = &HttpErrorResponse{
-			Code:    SystemErrorCode,
+			Code:    rose.SystemErrorCode,
 			Message: "There has been an error but could not create the body for it. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
 		}
 
@@ -148,7 +146,7 @@ func (s *Server) SendSuccess(res *HttpResponseModel, w http.ResponseWriter) {
 
 	if jsonErr != nil {
 		s.SendError(&HttpErrorResponse{
-			Code:    SystemErrorCode,
+			Code:    rose.SystemErrorCode,
 			Message: "There has been an error but could not create the body for it. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
 		}, w)
 
@@ -165,7 +163,7 @@ func (s *Server) ReadBody(b io.Reader, method string, w http.ResponseWriter) (*H
 
 	if err != nil {
 		r = &HttpErrorResponse{
-			Code:    SystemErrorCode,
+			Code:    rose.SystemErrorCode,
 			Message: "Could not create JSON from body. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
 		}
 
@@ -185,7 +183,7 @@ func (s *Server) SendResponse(body []byte, status int, w http.ResponseWriter) {
 		var r *HttpErrorResponse
 
 		r = &HttpErrorResponse{
-			Code:    SystemErrorCode,
+			Code:    rose.SystemErrorCode,
 			Message: "Could not write body to a response. This is an internal unexpected error and it has been logged. Please, file an issue in https://github.com/MarioLegenda/rose/issues",
 		}
 
@@ -195,7 +193,7 @@ func (s *Server) SendResponse(body []byte, status int, w http.ResponseWriter) {
 	}
 }
 
-func (s *Server) CreateMetadata(w http.ResponseWriter, r *http.Request) *Metadata {
+func (s *Server) CreateMetadata(w http.ResponseWriter, r *http.Request) *rose.Metadata {
 	var httpErr *HttpErrorResponse
 	var jErr error
 	var model HttpRequestModel
@@ -221,7 +219,7 @@ func (s *Server) CreateMetadata(w http.ResponseWriter, r *http.Request) *Metadat
 
 	if jErr != nil {
 		httpErr = &HttpErrorResponse{
-			Code:    SystemErrorCode,
+			Code:    rose.SystemErrorCode,
 			Message: fmt.Sprintf("Could not read body. Error : %s", jErr.Error()),
 		}
 
@@ -232,9 +230,8 @@ func (s *Server) CreateMetadata(w http.ResponseWriter, r *http.Request) *Metadat
 
 	data = []byte(model.Data)
 
-	return &Metadata{
-		Method: model.Method,
+	return &rose.Metadata{
 		Id:     model.Id,
-		Data:   &data,
+		Data:   data,
 	}
 }

@@ -2,43 +2,23 @@ package main
 
 import (
 	"fmt"
+	"rose/rose"
 )
 
 func main() {
-	var app *AppController
-	// Error message is handled in Boot()
-	if app = Boot(); app == nil {
-		return
+	r, err := rose.New(true)
+
+	if err != nil {
+		panic(err)
 	}
 
 	server := &Server{
 		Host: "127.0.0.1",
 		Port: "8090",
-		App: app,
+		App: r,
 	}
 
 	fmt.Println(fmt.Sprintf("Rose server started on %s:%s. Listening to incoming requests", server.Host, server.Port))
 
 	server.Start()
-}
-
-func Boot() *AppController {
-	var app *AppController
-	var err error
-	var errStream chan IError
-
-	fmt.Println("Booting Rose cache server...")
-
-	app = &AppController{}
-	errStream = app.Init(true)
-
-	err = <- errStream
-
-	if err != nil {
-		fmt.Printf("An error occurred when starting Rose: %s\nExiting", err.Error())
-
-		return nil
-	}
-
-	return app
 }
