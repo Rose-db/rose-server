@@ -1,27 +1,27 @@
 package roseServer
 
-type ReadRequest struct {
+type readRequest struct {
 	Id 		string `json:"id"`
 }
 
-type WriteRequest struct {
-	Id 		string `json:"id"`
-	Data 	string `json:"data"`
-}
-
-type DeleteRequest struct {
+type writeRequest struct {
 	Id 		string `json:"id"`
 	Data 	string `json:"data"`
 }
 
-type Response struct {
+type deleteRequest struct {
+	Id 		string `json:"id"`
+	Data 	string `json:"data"`
+}
+
+type response struct {
 	Method string	`json:"method"`
 	Status string	`json:"status"`
 	Reason string	`json:"reason"`
 	Result string	`json:"result"`
 }
 
-type ErrorResponse struct {
+type errorResponse struct {
 	Code int `json:"code"`
 	Message string `json:"message"`
 }
@@ -30,4 +30,11 @@ type Server interface {
 	Start()
 }
 
-const HttpServerType = "http"
+// error types
+const systemErrorType = "system_error"
+
+// application error codes
+const systemErrorCode = 2
+
+// server types
+const httpServerType = "http"
