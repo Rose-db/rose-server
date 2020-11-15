@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func testCreateTestServer(method string, url string, body io.Reader, withApp bool, t *testing.T) *httptest.ResponseRecorder {
+func testCreateTestServer(method string, url string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method,  url, body)
 	if err != nil {
 		t.Errorf("Request could not be created with message %s", err.Error())
