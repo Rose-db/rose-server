@@ -1,4 +1,4 @@
-package main
+package roseServer
 
 type ReadRequest struct {
 	Id 		string `json:"id"`
@@ -29,3 +29,5 @@ type ErrorResponse struct {
 type Server interface {
 	Start()
 }
+
+const HttpServerType = "http"
