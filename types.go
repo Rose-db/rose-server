@@ -1,40 +1,80 @@
 package roseServer
 
-type readRequest struct {
-	Id 		string `json:"id"`
+type socketRequest struct {
+	Method methodType `json:"method"`
+	Metadata []uint8  `json:"metadata"`
 }
 
-type writeRequest struct {
-	Id 		string `json:"id"`
-	Data 	string `json:"data"`
-}
-
-type deleteRequest struct {
-	Id 		string `json:"id"`
-	Data 	string `json:"data"`
-}
-
-type response struct {
-	Method string	`json:"method"`
-	Status string	`json:"status"`
-	Reason string	`json:"reason"`
-	Result string	`json:"result"`
-}
-
-type errorResponse struct {
-	Code int `json:"code"`
-	Message string `json:"message"`
+type socketResponse struct {
+	Method methodType `json:"method"`
+	Status int `json:"status"`
+	Result interface{} `json:"result"`
 }
 
 type Server interface {
-	Start()
+	Start() Error
 }
 
+type methodTypes struct {
+	types []methodType
+}
+
+var methodTypesImpl methodTypes = methodTypes{
+	types: []methodType{
+		createCollection,
+		write,
+		read,
+		delete,
+		replace,
+		query,
+	},
+}
+
+func (m methodTypes) IncludesType(a methodType) bool {
+	for _, b := range m.types {
+		if a == b {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m methodTypes) String() string {
+	s := ""
+	for i, b := range m.types {
+		s += string(b)
+
+		if i != len(m.types) - 1 {
+			s += ", "
+		}
+	}
+
+	return s
+}
+
+type methodType string
+
+const createCollection methodType = "createCollection"
+const write methodType = "write"
+const read methodType = "read"
+const delete methodType = "delete"
+const replace methodType = "replace"
+const query methodType = "query"
+
 // error types
-const systemErrorType = "system_error"
+const UnixSocketErrorType = "unix_socket_error"
+const SystemErrorType = "system_error"
+const RequestErrorType = "request_error"
 
 // application error codes
-const systemErrorCode = 2
+const UnixSocketErrorCode = 1
+const SystemErrorCode = 2
+const RequestErrorCode = 3
+
+const OperationSuccessCode = 1
+
+type ServerType string
 
 // server types
-const httpServerType = "http"
+const UnixSocketServer ServerType = "uds"
