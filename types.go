@@ -12,6 +12,7 @@ type socketResponse struct {
 	Status int `json:"status"`
 	Error interface{} `json:"error"`
 	Data *rose.AppResult `json:"data"`
+	ReadData interface{} `json:"readData"`
 }
 
 type Server interface {
@@ -24,12 +25,12 @@ type methodTypes struct {
 
 var methodTypesImpl methodTypes = methodTypes{
 	types: []methodType{
-		createCollection,
-		write,
-		read,
-		delete,
-		replace,
-		query,
+		createCollectionMethod,
+		writeMethod,
+		readMethod,
+		deleteMethod,
+		replaceMethod,
+		queryMethod,
 	},
 }
 
@@ -58,12 +59,12 @@ func (m methodTypes) String() string {
 
 type methodType string
 
-const createCollection methodType = "createCollection"
-const write methodType = "write"
-const read methodType = "read"
-const delete methodType = "delete"
-const replace methodType = "replace"
-const query methodType = "query"
+const createCollectionMethod methodType = "createCollection"
+const writeMethod methodType = "write"
+const readMethod methodType = "read"
+const deleteMethod methodType = "delete"
+const replaceMethod methodType = "replace"
+const queryMethod methodType = "query"
 
 // error types
 type ErrorType string

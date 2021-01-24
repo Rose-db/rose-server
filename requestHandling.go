@@ -12,149 +12,23 @@ import (
 func runRequest(conn net.Conn, r *rose.Rose) {
 	defer conn.Close()
 
-	body := &bytes.Buffer{}
-	s, err := bufio.NewReader(conn).ReadBytes('\n')
+	req, ok := validateRequest(conn)
 
-	if err != nil {
-		if ok := writeUDSError(
-			conn,
-			fmt.Sprintf("Unable to read request body: %s", err.Error()),
-			"",
-			InvalidRequestDataErrorCode,
-			RequestErrorType);
-		!ok {
-			return
-		}
-
+	if !ok {
 		return
 	}
 
-	body.Write(s)
-
-	var req socketRequest
-	if err := json.Unmarshal(body.Bytes(), &req); err != nil {
-		if ok := writeUDSError(
-			conn,
-			fmt.Sprintf("Cannot unpack request body: %s", err.Error()),
-			"",
-			InvalidRequestDataErrorCode,
-			RequestErrorType);
-		!ok {
-			return
-		}
+	if req.Method == createCollectionMethod {
+		createCollection(conn, r, req)
 
 		return
-	}
-
-	if !methodTypesImpl.IncludesType(req.Method) {
-		if ok := writeUDSError(
-			conn,
-			fmt.Sprintf("Invalid method '%s'. Expected one of '%s'", req.Method, methodTypesImpl.String()),
-			"",
-			InvalidRequestMethodErrorCode,
-			RequestErrorType);
-		!ok {
-			return
-		}
+	} else if req.Method == writeMethod {
+		createDocument(conn, r, req)
 
 		return
-	}
-
-	if req.Method == createCollection {
-		roseErr := r.NewCollection(string(req.Metadata))
-
-		if roseErr != nil {
-			if ok := writeRoseError(conn, roseErr); !ok {
-				// write to log
-				return
-			}
-
-			return
-		}
-
-		if ok := writeSuccessResponse(conn, socketResponse{
-			Method: req.Method,
-			Status: OperationSuccessCode,
-			Data: nil,
-		}); !ok {
-			// write to log
-
-			return
-		}
-
+	} else if req.Method == readMethod {
+		readDocument(conn, r, req)
 		return
-	} else if req.Method == write {
-		var wm rose.WriteMetadata
-
-		err := json.Unmarshal(req.Metadata, &wm)
-
-		if err != nil {
-			if ok := writeUDSError(
-				conn,
-				fmt.Sprintf("Cannot read WRITE request metadata with message: %s", err.Error()),
-				string(write),
-				InvalidMetadataErrorCode,
-				RequestErrorType);
-			!ok {
-				return
-			}
-
-			return
-		}
-
-		res, roseErr := r.Write(wm)
-
-		if roseErr != nil {
-			if ok := writeRoseError(conn, roseErr); !ok {
-				return
-			}
-
-			return
-		}
-
-		if ok := writeSuccessResponse(conn, socketResponse{
-			Method: req.Method,
-			Status: OperationSuccessCode,
-			Data: res,
-		}); !ok {
-			// write to log
-
-			return
-		}
-
-		return
-	} else if req.Method == read {
-		var rm rose.ReadMetadata
-
-		err := json.Unmarshal(req.Metadata, &rm)
-
-		if err != nil {
-			if ok := writeUDSError(
-				conn,
-				fmt.Sprintf("Cannot read READ request metadata with message: %s", err.Error()),
-				string(read),
-				InvalidMetadataErrorCode,
-				RequestErrorType);
-			!ok {
-				return
-			}
-
-			return
-		}
-
-		rp := make(map[string]interface{})
-
-		rm.Data = &rp
-
-		_, roseErr := r.Read(rm)
-
-		if roseErr != nil {
-			if ok := writeRoseError(conn, roseErr); !ok {
-				return
-			}
-
-			return
-		}
 	}
 }
 
@@ -191,6 +65,58 @@ func writeSuccessResponse(conn net.Conn, res socketResponse) bool {
 	_, e := conn.Write(b)
 
 	return e == nil
+}
+
+func validateRequest(conn net.Conn) (socketRequest, bool) {
+	body := &bytes.Buffer{}
+	s, err := bufio.NewReader(conn).ReadBytes('\n')
+
+	if err != nil {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Unable to read request body: %s", err.Error()),
+			"",
+			InvalidRequestDataErrorCode,
+			RequestErrorType);
+			!ok {
+			return socketRequest{}, false
+		}
+
+		return socketRequest{}, false
+	}
+
+	body.Write(s)
+
+	var req socketRequest
+	if err := json.Unmarshal(body.Bytes(), &req); err != nil {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Cannot unpack request body: %s", err.Error()),
+			"",
+			InvalidRequestDataErrorCode,
+			RequestErrorType);
+			!ok {
+			return socketRequest{}, false
+		}
+
+		return socketRequest{}, false
+	}
+
+	if !methodTypesImpl.IncludesType(req.Method) {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Invalid method '%s'. Expected one of '%s'", req.Method, methodTypesImpl.String()),
+			"",
+			InvalidRequestMethodErrorCode,
+			RequestErrorType);
+			!ok {
+			return socketRequest{}, false
+		}
+
+		return socketRequest{}, false
+	}
+
+	return req, true
 }
 
 

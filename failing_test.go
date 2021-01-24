@@ -31,7 +31,7 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		gomega.Expect(sockRes.Data).To(gomega.BeNil())
 
 		sockErr := sockRes.Error.(map[string]interface{})
-		
+
 		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
 		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidRequestMethodErrorCode)))
 		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Invalid method 'invalid'. Expected one of 'createCollection, write, read, delete, replace, query'"))
@@ -147,7 +147,7 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		}
 
 		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
-		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(write)))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(writeMethod)))
 
 		sockErr := sockRes.Error.(map[string]interface{})
 
@@ -176,7 +176,7 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		}
 
 		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
-		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(read)))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(readMethod)))
 
 		sockErr := sockRes.Error.(map[string]interface{})
 

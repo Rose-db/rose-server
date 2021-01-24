@@ -42,7 +42,7 @@ var _ = GinkgoDescribe("Write tests", func() {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal response: %s", err.Error()))
 		}
 
-		gomega.Expect(res.Method).To(gomega.Equal(write))
+		gomega.Expect(res.Method).To(gomega.Equal(writeMethod))
 		gomega.Expect(res.Status).To(gomega.Equal(OperationSuccessCode))
 
 		gomega.Expect(res.Data.Method).To(gomega.Equal(rose.WriteMethodType))
@@ -52,16 +52,17 @@ var _ = GinkgoDescribe("Write tests", func() {
 	})
 
 	GinkgoIt("Should read something with uds server", func() {
-		ginkgo.Skip("")
 		collName := "writeColl_2"
 
 		testCreateCollection(collName)
 
 		conn := testUnixConnect()
 
+		writeData := "something written"
+
 		testWrite(conn, rose.WriteMetadata{
 			CollectionName: collName,
-			Data:           nil,
+			Data:           testAsJson(writeData),
 		})
 
 		testCloseUnixConn(conn)
@@ -90,10 +91,12 @@ var _ = GinkgoDescribe("Write tests", func() {
 		var res socketResponse
 		err = json.Unmarshal(b, &res)
 
-		fmt.Println(string(b))
+		gomega.Expect(res.Error).To(gomega.BeNil())
+		gomega.Expect(res.Method).To(gomega.Equal(readMethod))
+		gomega.Expect(res.Data).To(gomega.BeNil())
+		gomega.Expect(res.Status).To(gomega.Equal(OperationSuccessCode))
+		gomega.Expect(res.ReadData).To(gomega.Equal(writeData))
 
 		gomega.Expect(err).To(gomega.BeNil())
-
-		fmt.Println(string(b))
 	})
 })
