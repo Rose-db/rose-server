@@ -10,8 +10,8 @@ type socketRequest struct {
 type socketResponse struct {
 	Method methodType `json:"method"`
 	Status int `json:"status"`
-	Message string `json:"message"`
-	Result *rose.AppResult `json:"result"`
+	Error interface{} `json:"error"`
+	Data *rose.AppResult `json:"data"`
 }
 
 type Server interface {
@@ -66,14 +66,18 @@ const replace methodType = "replace"
 const query methodType = "query"
 
 // error types
-const UnixSocketErrorType = "unix_socket_error"
-const SystemErrorType = "system_error"
-const RequestErrorType = "request_error"
+type ErrorType string
+
+const SystemErrorType ErrorType = "system_error"
+const RequestErrorType ErrorType = "request_error"
 
 // application error codes
-const UnixSocketErrorCode = 1
-const SystemErrorCode = 2
-const RequestErrorCode = 3
+type ErrorCode int
+
+const InvalidRequestDataErrorCode ErrorCode = 1
+const InvalidRequestMethodErrorCode ErrorCode = 2
+const InvalidMetadataErrorCode ErrorCode = 3
+const InvalidStartUpErrorCode ErrorCode = 4
 
 const OperationSuccessCode = 1
 const OperationFailedCode = 0

@@ -27,7 +27,7 @@ var _ = GinkgoDescribe("Collection tests", func() {
 
 		gomega.Expect(res.Method).To(gomega.Equal(createCollection))
 		gomega.Expect(res.Status).To(gomega.Equal(1))
-		gomega.Expect(res.Result).To(gomega.BeNil())
+		gomega.Expect(res.Data).To(gomega.BeNil())
 
 		testCloseUnixConn(conn)
 	})

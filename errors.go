@@ -1,99 +1,46 @@
 package roseServer
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 type Error interface {
 	Error() string
-	Type() string
-	GetCode() int
-	JSON(method string) []uint8
+	GetType() ErrorType
+	GetCode() ErrorCode
+	Map() map[string]interface{}
 }
 
-type unixSocketError struct {
-	Code int
+
+
+
+type serverError struct {
+	Type ErrorType
+	Code ErrorCode
 	Message string
 }
 
-func (e *unixSocketError) Error() string {
-	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
+func (e *serverError) Error() string {
+	return e.Message
 }
 
-func (e *unixSocketError) Type() string {
-	return UnixSocketErrorType
+func (e *serverError) GetType() ErrorType {
+	return e.Type
 }
 
-func (e *unixSocketError) GetCode() int {
-	return UnixSocketErrorCode
+func (e *serverError) GetCode() ErrorCode {
+	return e.Code
 }
 
-func (e *unixSocketError) JSON(method string) []uint8 {
-	return errToJson(e, method)
-}
-
-
-
-type requestError struct {
-	Code int
-	Message string
-}
-
-func (e *requestError) Error() string {
-	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
-}
-
-func (e *requestError) Type() string {
-	return RequestErrorType
-}
-
-func (e *requestError) GetCode() int {
-	return RequestErrorCode
-}
-
-func (e *requestError) JSON(method string) []uint8 {
-	return errToJson(e, method)
+func (e *serverError) Map() map[string]interface{} {
+	return errToJson(e)
 }
 
 
 
 
-type systemError struct {
-	Code int
-	Message string
-}
-
-func (e *systemError) Error() string {
-	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
-}
-
-func (e *systemError) Type() string {
-	return SystemErrorType
-}
-
-func (e *systemError) GetCode() int {
-	return SystemErrorCode
-}
-
-func (e *systemError) JSON(method string) []uint8 {
-	return errToJson(e, method)
-}
-
-func errToJson(e Error, method string) []uint8 {
-	j := map[string]interface{}{
-		"Status": OperationFailedCode,
-		"Method": method,
-		"Data": map[string]interface{}{
-			"Type": e.Type(),
-			"Code": e.GetCode(),
-			"Message": e.Error(),
-		},
+func errToJson(e Error) map[string]interface{} {
+	return map[string]interface{}{
+		"Type": e.GetType(),
+		"Code": e.GetCode(),
+		"Message": e.Error(),
 	}
-
-	b, _ := json.Marshal(j)
-
-	return b
 }
 
 

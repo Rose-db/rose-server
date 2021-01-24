@@ -16,8 +16,9 @@ func (u *UDSServer) Start() Error {
 	l, err := net.Listen("unix", "/tmp/rose.sock")
 
 	if err != nil {
-		return &unixSocketError{
-			Code:    UnixSocketErrorCode,
+		return &serverError{
+			Type: SystemErrorType,
+			Code:    InvalidStartUpErrorCode,
 			Message: fmt.Sprintf("Failed listening to unix domain socket with message: %s", err.Error()),
 		}
 	}
@@ -25,9 +26,10 @@ func (u *UDSServer) Start() Error {
 	r, err := rose.New(true)
 
 	if err != nil {
-		return &systemError{
-			Code:    SystemErrorCode,
-			Message: fmt.Sprintf("Rose failed to create: %s", err.Error()),
+		return &serverError{
+			Type: SystemErrorType,
+			Code:    InvalidStartUpErrorCode,
+			Message: fmt.Sprintf("Rose failed to run: %s", err.Error()),
 		}
 	}
 
@@ -35,8 +37,9 @@ func (u *UDSServer) Start() Error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			return &unixSocketError{
-				Code:    UnixSocketErrorCode,
+			return &serverError{
+				Type: SystemErrorType,
+				Code:    InvalidStartUpErrorCode,
 				Message: fmt.Sprintf("Failed accepting a request on unix domain socket with message: %s", err.Error()),
 			}
 		}

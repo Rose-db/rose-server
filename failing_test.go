@@ -18,27 +18,28 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
 
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(""))
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(""))
 
-		data := errRes["Data"].(map[string]interface{})
+		gomega.Expect(sockRes.Data).To(gomega.BeNil())
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(RequestErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(RequestErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 3, Message: Invalid method invalid. Expected one of createCollection, write, read, delete, replace, query"))
+		sockErr := sockRes.Error.(map[string]interface{})
+		
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidRequestMethodErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Invalid method 'invalid'. Expected one of 'createCollection, write, read, delete, replace, query'"))
 
 		testCloseUnixConn(conn)
 	})
 
-	GinkgoIt("Should fail the request because the server cannot read and empty request body", func() {
+	GinkgoIt("Should fail the request because the server cannot read an empty request body", func() {
 		conn := testUnixConnect()
 
 		testWriteUnixServer(conn, []uint8{})
@@ -46,22 +47,23 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
 
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(""))
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(""))
 
-		data := errRes["Data"].(map[string]interface{})
+		gomega.Expect(sockRes.Data).To(gomega.BeNil())
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(SystemErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(SystemErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 2, Message: Unable to read request body: EOF"))
+		sockErr := sockRes.Error.(map[string]interface{})
+
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"]).To(gomega.Equal(float64(InvalidRequestDataErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Unable to read request body: EOF"))
 
 		testCloseUnixConn(conn)
 	})
@@ -74,22 +76,23 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
 
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(""))
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(""))
 
-		data := errRes["Data"].(map[string]interface{})
+		gomega.Expect(sockRes.Data).To(gomega.BeNil())
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(SystemErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(SystemErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 2, Message: Cannot unpack request body: unexpected end of JSON input"))
+		sockErr := sockRes.Error.(map[string]interface{})
+
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidRequestDataErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Cannot unpack request body: unexpected end of JSON input"))
 
 		testCloseUnixConn(conn)
 	})
@@ -105,21 +108,23 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(""))
 
-		data := errRes["Data"].(map[string]interface{})
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(""))
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(SystemErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(SystemErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 2, Message: Cannot unpack request body: json: cannot unmarshal string into Go value of type roseServer.socketRequest"))
+		gomega.Expect(sockRes.Data).To(gomega.BeNil())
+
+		sockErr := sockRes.Error.(map[string]interface{})
+
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidRequestDataErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Cannot unpack request body: json: cannot unmarshal string into Go value of type roseServer.socketRequest"))
 
 		testCloseUnixConn(conn)
 	})
@@ -134,22 +139,21 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
 
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(string(write)))
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(write)))
 
-		data := errRes["Data"].(map[string]interface{})
+		sockErr := sockRes.Error.(map[string]interface{})
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(RequestErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(RequestErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 3, Message: Cannot read WRITE request metadata with message: invalid character 'i' looking for beginning of value"))
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidMetadataErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Cannot read WRITE request metadata with message: invalid character 'i' looking for beginning of value"))
 
 		testCloseUnixConn(conn)
 	})
@@ -164,22 +168,21 @@ var _ = GinkgoDescribe("Failing tests", func() {
 		testCloseUnixWriteConn(conn)
 		b := testReadUnixResponse(conn)
 
-		errRes := make(map[string]interface{})
-
-		err := json.Unmarshal(b, &errRes)
+		var sockRes socketResponse
+		err := json.Unmarshal(b, &sockRes)
 
 		if err != nil {
 			ginkgo.Fail(fmt.Sprintf("Unable to unmarshal error response: %s", err.Error()))
 		}
 
-		gomega.Expect(errRes["Status"].(float64)).To(gomega.Equal(float64(OperationFailedCode)))
-		gomega.Expect(errRes["Method"]).To(gomega.Equal(string(read)))
+		gomega.Expect(sockRes.Status).To(gomega.Equal(OperationFailedCode))
+		gomega.Expect(string(sockRes.Method)).To(gomega.Equal(string(read)))
 
-		data := errRes["Data"].(map[string]interface{})
+		sockErr := sockRes.Error.(map[string]interface{})
 
-		gomega.Expect(data["Type"]).To(gomega.Equal(RequestErrorType))
-		gomega.Expect(data["Code"].(float64)).To(gomega.Equal(float64(RequestErrorCode)))
-		gomega.Expect(data["Message"]).To(gomega.Equal("Code: 3, Message: Cannot read READ request metadata with message: invalid character 'm' looking for beginning of value"))
+		gomega.Expect(sockErr["Type"].(string)).To(gomega.Equal(string(RequestErrorType)))
+		gomega.Expect(sockErr["Code"].(float64)).To(gomega.Equal(float64(InvalidMetadataErrorCode)))
+		gomega.Expect(sockErr["Message"]).To(gomega.Equal("Cannot read READ request metadata with message: invalid character 'm' looking for beginning of value"))
 
 		testCloseUnixConn(conn)
 	})

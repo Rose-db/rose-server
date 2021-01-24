@@ -16,7 +16,13 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 	s, err := bufio.NewReader(conn).ReadBytes('\n')
 
 	if err != nil {
-		if ok := writeUDSSystemError(conn, fmt.Sprintf("Unable to read request body: %s", err.Error()), ""); !ok {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Unable to read request body: %s", err.Error()),
+			"",
+			InvalidRequestDataErrorCode,
+			RequestErrorType);
+		!ok {
 			return
 		}
 
@@ -27,7 +33,13 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 
 	var req socketRequest
 	if err := json.Unmarshal(body.Bytes(), &req); err != nil {
-		if ok := writeUDSSystemError(conn, fmt.Sprintf("Cannot unpack request body: %s", err.Error()), ""); !ok {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Cannot unpack request body: %s", err.Error()),
+			"",
+			InvalidRequestDataErrorCode,
+			RequestErrorType);
+		!ok {
 			return
 		}
 
@@ -35,7 +47,13 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 	}
 
 	if !methodTypesImpl.IncludesType(req.Method) {
-		if ok := writeUDSRequestError(conn, fmt.Sprintf("Invalid method %s. Expected one of %s", req.Method, methodTypesImpl.String()), ""); !ok {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Invalid method '%s'. Expected one of '%s'", req.Method, methodTypesImpl.String()),
+			"",
+			InvalidRequestMethodErrorCode,
+			RequestErrorType);
+		!ok {
 			return
 		}
 
@@ -57,7 +75,7 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		if ok := writeSuccessResponse(conn, socketResponse{
 			Method: req.Method,
 			Status: OperationSuccessCode,
-			Result: nil,
+			Data: nil,
 		}); !ok {
 			// write to log
 
@@ -71,7 +89,13 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		err := json.Unmarshal(req.Metadata, &wm)
 
 		if err != nil {
-			if ok := writeUDSRequestError(conn, fmt.Sprintf("Cannot read WRITE request metadata with message: %s", err.Error()), string(write)); !ok {
+			if ok := writeUDSError(
+				conn,
+				fmt.Sprintf("Cannot read WRITE request metadata with message: %s", err.Error()),
+				string(write),
+				InvalidMetadataErrorCode,
+				RequestErrorType);
+			!ok {
 				return
 			}
 
@@ -91,7 +115,7 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		if ok := writeSuccessResponse(conn, socketResponse{
 			Method: req.Method,
 			Status: OperationSuccessCode,
-			Result: res,
+			Data: res,
 		}); !ok {
 			// write to log
 
@@ -105,12 +129,22 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		err := json.Unmarshal(req.Metadata, &rm)
 
 		if err != nil {
-			if ok := writeUDSRequestError(conn, fmt.Sprintf("Cannot read READ request metadata with message: %s", err.Error()), string(read)); !ok {
+			if ok := writeUDSError(
+				conn,
+				fmt.Sprintf("Cannot read READ request metadata with message: %s", err.Error()),
+				string(read),
+				InvalidMetadataErrorCode,
+				RequestErrorType);
+			!ok {
 				return
 			}
 
 			return
 		}
+
+		rp := make(map[string]interface{})
+
+		rm.Data = &rp
 
 		_, roseErr := r.Read(rm)
 
@@ -124,20 +158,23 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 	}
 }
 
-func writeUDSSystemError(conn net.Conn, msg string, method string) bool {
-	_, err := conn.Write((&systemError{
-		Code:    SystemErrorCode,
+func writeUDSError(conn net.Conn, msg string, method string, code ErrorCode, t ErrorType) bool {
+	reqErr := (&serverError{
+		Type: t,
+		Code:    code,
 		Message: msg,
-	}).JSON(method))
+	}).Map()
 
-	return err == nil
-}
+	res := socketResponse{
+		Method: methodType(method),
+		Status: OperationFailedCode,
+		Error:  reqErr,
+		Data:   nil,
+	}
 
-func writeUDSRequestError(conn net.Conn, msg string, method string) bool {
-	_, err := conn.Write((&requestError{
-		Code:    RequestErrorCode,
-		Message: msg,
-	}).JSON(method))
+	b, _ := json.Marshal(res)
+
+	_, err := conn.Write(b)
 
 	return err == nil
 }

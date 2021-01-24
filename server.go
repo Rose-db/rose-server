@@ -9,8 +9,9 @@ func NewServer(t ServerType) (Server, Error) {
 		return newUDSServer(), nil
 	}
 
-	return nil, &systemError{
-		Code:    SystemErrorCode,
+	return nil, &serverError{
+		Type: SystemErrorType,
+		Code:    InvalidStartUpErrorCode,
 		Message: fmt.Sprintf("Unknown server type %s", t),
 	}
 }
