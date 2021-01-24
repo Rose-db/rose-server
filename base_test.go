@@ -7,6 +7,7 @@ import (
 	"github.com/onsi/gomega"
 	"io/ioutil"
 	"net"
+	"rose/rose"
 	"testing"
 )
 
@@ -62,21 +63,42 @@ func testUnixConnect() net.Conn {
 	return conn
 }
 
-func testCreateUDSWrite(m []uint8) []uint8 {
-	s := socketRequest{
-		Method:   "write",
-		Metadata: m,
-	}
+func testCreateCollection(collName string) {
+	conn := testUnixConnect()
 
-	j, err := json.Marshal(s)
+	req := testCreateSocketRequest("createCollection", []uint8(collName))
+
+	testWriteUnixServer(conn, req)
+
+	testCloseUnixWriteConn(conn)
+	b := testReadUnixResponse(conn)
+
+	var res socketResponse
+	err := json.Unmarshal(b, &res)
 
 	if err != nil {
-		ginkgo.Fail(fmt.Sprintf("Unable to marshal socketRequest: %s", err.Error()))
+		ginkgo.Fail(fmt.Sprintf("Unable to unmarshal response: %s", err.Error()))
 	}
 
-	j = append(j, 10)
+	gomega.Expect(res.Method).To(gomega.Equal(createCollection))
+	gomega.Expect(res.Status).To(gomega.Equal(1))
+	gomega.Expect(res.Result).To(gomega.BeNil())
 
-	return j
+	testCloseUnixConn(conn)
+}
+
+func testWrite(conn net.Conn, m rose.WriteMetadata) {
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		gomega.Expect(err).To(gomega.BeNil())
+	}
+
+	req := testCreateSocketRequest("write", b)
+
+	testWriteUnixServer(conn, req)
+
+	testCloseUnixWriteConn(conn)
 }
 
 func testCreateSocketRequest(method string, data []uint8) []uint8 {

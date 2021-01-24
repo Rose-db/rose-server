@@ -1,5 +1,7 @@
 package roseServer
 
+import "rose/rose"
+
 type socketRequest struct {
 	Method methodType `json:"method"`
 	Metadata []uint8  `json:"metadata"`
@@ -8,7 +10,8 @@ type socketRequest struct {
 type socketResponse struct {
 	Method methodType `json:"method"`
 	Status int `json:"status"`
-	Result interface{} `json:"result"`
+	Message string `json:"message"`
+	Result *rose.AppResult `json:"result"`
 }
 
 type Server interface {
@@ -73,6 +76,7 @@ const SystemErrorCode = 2
 const RequestErrorCode = 3
 
 const OperationSuccessCode = 1
+const OperationFailedCode = 0
 
 type ServerType string
 

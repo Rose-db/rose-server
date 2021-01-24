@@ -9,7 +9,7 @@ type Error interface {
 	Error() string
 	Type() string
 	GetCode() int
-	JSON() []uint8
+	JSON(method string) []uint8
 }
 
 type unixSocketError struct {
@@ -29,8 +29,8 @@ func (e *unixSocketError) GetCode() int {
 	return UnixSocketErrorCode
 }
 
-func (e *unixSocketError) JSON() []uint8 {
-	return errToJson(e)
+func (e *unixSocketError) JSON(method string) []uint8 {
+	return errToJson(e, method)
 }
 
 
@@ -52,8 +52,8 @@ func (e *requestError) GetCode() int {
 	return RequestErrorCode
 }
 
-func (e *requestError) JSON() []uint8 {
-	return errToJson(e)
+func (e *requestError) JSON(method string) []uint8 {
+	return errToJson(e, method)
 }
 
 
@@ -76,15 +76,19 @@ func (e *systemError) GetCode() int {
 	return SystemErrorCode
 }
 
-func (e *systemError) JSON() []uint8 {
-	return errToJson(e)
+func (e *systemError) JSON(method string) []uint8 {
+	return errToJson(e, method)
 }
 
-func errToJson(e Error) []uint8 {
+func errToJson(e Error, method string) []uint8 {
 	j := map[string]interface{}{
-		"type": e.Type(),
-		"code": e.GetCode(),
-		"message": e.Error(),
+		"Status": OperationFailedCode,
+		"Method": method,
+		"Data": map[string]interface{}{
+			"Type": e.Type(),
+			"Code": e.GetCode(),
+			"Message": e.Error(),
+		},
 	}
 
 	b, _ := json.Marshal(j)
