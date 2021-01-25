@@ -92,7 +92,7 @@ func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 	rp := ""
 	rm.Data = &rp
 
-	_, roseErr := r.Read(rm)
+	res, roseErr := r.Read(rm)
 
 	if roseErr != nil {
 		if ok := writeRoseError(conn, roseErr); !ok {
@@ -105,6 +105,7 @@ func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 	if ok := writeSuccessResponse(conn, socketResponse{
 		Method: req.Method,
 		Status: OperationSuccessCode,
+		Data: res,
 		ReadData: rm.Data,
 	}); !ok {
 		// write to log

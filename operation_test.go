@@ -91,12 +91,40 @@ var _ = GinkgoDescribe("Write tests", func() {
 		var res socketResponse
 		err = json.Unmarshal(b, &res)
 
+		gomega.Expect(err).To(gomega.BeNil())
+
 		gomega.Expect(res.Error).To(gomega.BeNil())
 		gomega.Expect(res.Method).To(gomega.Equal(readMethod))
-		gomega.Expect(res.Data).To(gomega.BeNil())
+		gomega.Expect(res.Data).To(gomega.Not(gomega.BeNil()))
 		gomega.Expect(res.Status).To(gomega.Equal(OperationSuccessCode))
 		gomega.Expect(res.ReadData).To(gomega.Equal(writeData))
 
-		gomega.Expect(err).To(gomega.BeNil())
+		gomega.Expect(res.Data.Status).To(gomega.Equal(rose.FoundResultStatus))
+	})
+
+	GinkgoIt("Should delete a document with uds server", func() {
+		collName := "writeColl_3"
+
+		testCreateCollection(collName)
+
+		conn := testUnixConnect()
+
+		writeData := "something written"
+
+		testWrite(conn, rose.WriteMetadata{
+			CollectionName: collName,
+			Data:           testAsJson(writeData),
+		})
+
+		testCloseUnixConn(conn)
+
+		conn = testUnixConnect()
+
+		rm := rose.ReadMetadata{
+			CollectionName: collName,
+			ID: 1,
+		}
+
+		testRead(conn, rm, writeData)
 	})
 })
