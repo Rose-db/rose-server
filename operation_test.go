@@ -126,5 +126,41 @@ var _ = GinkgoDescribe("Write tests", func() {
 		}
 
 		testRead(conn, rm, writeData)
+
+		testCloseUnixConn(conn)
+
+		conn = testUnixConnect()
+
+		dm := rose.DeleteMetadata{
+			CollectionName: collName,
+			ID: 1,
+		}
+
+		b, err := json.Marshal(dm)
+
+		if err != nil {
+			gomega.Expect(err).To(gomega.BeNil())
+		}
+
+		req := testCreateSocketRequest("delete", b)
+
+		testWriteUnixServer(conn, req)
+
+		testCloseUnixWriteConn(conn)
+
+		b = testReadUnixResponse(conn)
+
+		var res socketResponse
+		err = json.Unmarshal(b, &res)
+
+		gomega.Expect(err).To(gomega.BeNil())
+
+		gomega.Expect(res.Error).To(gomega.BeNil())
+		gomega.Expect(res.Method).To(gomega.Equal(deleteMethod))
+		gomega.Expect(res.Data).To(gomega.Not(gomega.BeNil()))
+		gomega.Expect(res.Status).To(gomega.Equal(OperationSuccessCode))
+		gomega.Expect(res.ReadData).To(gomega.BeNil())
+
+		gomega.Expect(res.Data.Status).To(gomega.Equal(rose.DeletedResultStatus))
 	})
 })

@@ -31,9 +31,9 @@ func createCollection(conn net.Conn, r *rose.Rose, req socketRequest) {
 }
 
 func createDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
-	var wm rose.WriteMetadata
+	var m rose.WriteMetadata
 
-	err := json.Unmarshal(req.Metadata, &wm)
+	err := json.Unmarshal(req.Metadata, &m)
 
 	if err != nil {
 		if ok := writeUDSError(
@@ -49,7 +49,7 @@ func createDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 		return
 	}
 
-	res, roseErr := r.Write(wm)
+	res, roseErr := r.Write(m)
 
 	if roseErr != nil {
 		if ok := writeRoseError(conn, roseErr); !ok {
@@ -71,9 +71,9 @@ func createDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 }
 
 func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
-	var rm rose.ReadMetadata
+	var m rose.ReadMetadata
 
-	err := json.Unmarshal(req.Metadata, &rm)
+	err := json.Unmarshal(req.Metadata, &m)
 
 	if err != nil {
 		if ok := writeUDSError(
@@ -90,9 +90,9 @@ func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 	}
 
 	rp := ""
-	rm.Data = &rp
+	m.Data = &rp
 
-	res, roseErr := r.Read(rm)
+	res, roseErr := r.Read(m)
 
 	if roseErr != nil {
 		if ok := writeRoseError(conn, roseErr); !ok {
@@ -106,7 +106,47 @@ func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 		Method: req.Method,
 		Status: OperationSuccessCode,
 		Data: res,
-		ReadData: rm.Data,
+		ReadData: m.Data,
+	}); !ok {
+		// write to log
+
+		return
+	}
+}
+
+func deleteDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
+	var m rose.DeleteMetadata
+
+	err := json.Unmarshal(req.Metadata, &m)
+
+	if err != nil {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Cannot read READ request metadata with message: %s", err.Error()),
+			string(readMethod),
+			InvalidMetadataErrorCode,
+			RequestErrorType);
+			!ok {
+			return
+		}
+
+		return
+	}
+
+	res, roseErr := r.Delete(m)
+
+	if roseErr != nil {
+		if ok := writeRoseError(conn, roseErr); !ok {
+			return
+		}
+
+		return
+	}
+
+	if ok := writeSuccessResponse(conn, socketResponse{
+		Method: req.Method,
+		Status: OperationSuccessCode,
+		Data: res,
 	}); !ok {
 		// write to log
 

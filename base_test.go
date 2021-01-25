@@ -99,6 +99,20 @@ func testWrite(conn net.Conn, m rose.WriteMetadata) {
 	testWriteUnixServer(conn, req)
 
 	testCloseUnixWriteConn(conn)
+
+	b = testReadUnixResponse(conn)
+
+	var res socketResponse
+	err = json.Unmarshal(b, &res)
+
+	gomega.Expect(err).To(gomega.BeNil())
+
+	gomega.Expect(res.Error).To(gomega.BeNil())
+	gomega.Expect(res.Method).To(gomega.Equal(writeMethod))
+	gomega.Expect(res.Data).To(gomega.Not(gomega.BeNil()))
+	gomega.Expect(res.Status).To(gomega.Equal(OperationSuccessCode))
+
+	gomega.Expect(res.Data.Status).To(gomega.Equal(rose.OkResultStatus))
 }
 
 func testRead(conn net.Conn, m rose.ReadMetadata, writeData string) socketResponse {

@@ -28,7 +28,10 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		return
 	} else if req.Method == readMethod {
 		readDocument(conn, r, req)
+
 		return
+	} else if req.Method == deleteMethod {
+		deleteDocument(conn, r, req)
 	}
 }
 
