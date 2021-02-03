@@ -4,7 +4,17 @@ import "rose/rose"
 
 type socketRequest struct {
 	Method methodType `json:"method"`
-	Metadata []uint8  `json:"metadata"`
+	Metadata interface{} `json:"metadata"`
+}
+
+type WriteMetadata struct {
+	CollectionName string `json:"collectionName"`
+	Data interface{} `json:"data"`
+}
+
+type socketWriteRequest struct {
+	Method methodType `json:"method"`
+	Metadata WriteMetadata  `json:"metadata"`
 }
 
 type socketResponse struct {

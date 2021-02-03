@@ -32,6 +32,8 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		return
 	} else if req.Method == deleteMethod {
 		deleteDocument(conn, r, req)
+	} else if req.Method == replaceMethod {
+		replaceDocument(conn, r, req)
 	}
 }
 
