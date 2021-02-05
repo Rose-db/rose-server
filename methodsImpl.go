@@ -58,6 +58,52 @@ func createDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 	}
 }
 
+func bulkWriteDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
+	mtd := req.Metadata.(map[string]interface{})
+
+	d := mtd["data"].(string)
+	b := []interface{}{}
+
+	err := json.Unmarshal([]uint8(d), &b)
+
+	if err != nil {
+		if ok := writeUDSError(
+			conn,
+			fmt.Sprintf("Unable to convert request data: %s", err.Error()),
+			"",
+			InvalidRequestDataErrorCode,
+			RequestErrorType);
+			!ok {
+				return
+		}
+	}
+
+	var m rose.BulkWriteMetadata = rose.BulkWriteMetadata{
+		CollectionName: mtd["collectionName"].(string),
+		Data:           b,
+	}
+
+	res, roseErr := r.BulkWrite(m)
+
+	if roseErr != nil {
+		if ok := writeRoseError(conn, roseErr); !ok {
+			return
+		}
+
+		return
+	}
+
+	if ok := writeSuccessResponse(conn, socketResponse{
+		Method: req.Method,
+		Status: OperationSuccessCode,
+		BulkWriteData: res,
+	}); !ok {
+		// write to log
+
+		return
+	}
+}
+
 func readDocument(conn net.Conn, r *rose.Rose, req socketRequest) {
 	mtd := req.Metadata.(map[string]interface{})
 	var m rose.ReadMetadata = rose.ReadMetadata{

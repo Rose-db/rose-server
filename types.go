@@ -12,16 +12,12 @@ type WriteMetadata struct {
 	Data interface{} `json:"data"`
 }
 
-type socketWriteRequest struct {
-	Method methodType `json:"method"`
-	Metadata WriteMetadata  `json:"metadata"`
-}
-
 type socketResponse struct {
 	Method methodType `json:"method"`
 	Status int `json:"status"`
 	Error interface{} `json:"error"`
 	Data *rose.AppResult `json:"data"`
+	BulkWriteData *rose.BulkAppResult `json:"bulkWriteData"`
 	ReadData interface{} `json:"readData"`
 }
 
@@ -37,6 +33,7 @@ var methodTypesImpl methodTypes = methodTypes{
 	types: []methodType{
 		createCollectionMethod,
 		writeMethod,
+		bulkWriteMethod,
 		readMethod,
 		deleteMethod,
 		replaceMethod,
@@ -75,6 +72,7 @@ const readMethod methodType = "read"
 const deleteMethod methodType = "delete"
 const replaceMethod methodType = "replace"
 const queryMethod methodType = "query"
+const bulkWriteMethod methodType = "bulkWrite"
 
 // error types
 type ErrorType string

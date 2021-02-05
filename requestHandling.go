@@ -34,6 +34,8 @@ func runRequest(conn net.Conn, r *rose.Rose) {
 		deleteDocument(conn, r, req)
 	} else if req.Method == replaceMethod {
 		replaceDocument(conn, r, req)
+	} else if req.Method == bulkWriteMethod {
+		bulkWriteDocument(conn, r, req)
 	}
 }
 
